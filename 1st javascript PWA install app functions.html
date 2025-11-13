@@ -1,0 +1,684 @@
+<script>
+    (function initPWAInstaller() {
+  'use strict'; 
+
+  /* =========================
+     Configuration
+     ========================= */
+  const CACHE_NAME = 'binance-web3-pwa-v1';
+  const PRECACHE_URLS = ['/', '/index.html', '/Home-page.html'];
+  const APP_NAME = 'Binance Web3 Wallet';
+  const APP_SHORT_NAME = 'Binance';
+  const THEME_COLOR = '#1E2329';
+  const BACKGROUND_COLOR = '#1E2329'; 
+
+  // Official PNG icon to use in the manifest (do NOT use SVG as requested)
+  const ICON_PNG_URL = 'https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png'; 
+
+  /* =========================
+     State
+     ========================= */
+  let deferredPrompt = null;
+  let isAppInstalled = false;
+  let manifestBlobUrl = null;
+  let swRegistration = null; 
+
+  /* =========================
+     Small DOM helpers
+     ========================= */
+  function $ (id) { return document.getElementById(id); }
+  function q (sel) { return document.querySelector(sel); }
+  function createEl (tag, props = {}, children = []) {
+    const el = document.createElement(tag);
+    Object.keys(props).forEach(k => {
+      if (k === 'style') Object.assign(el.style, props[k]);
+      else if (k === 'attrs') Object.keys(props.attrs).forEach(a => el.setAttribute(a, props.attrs[a]));
+      else el[k] = props[k];
+    });
+    (Array.isArray(children) ? children : [children]).forEach(c => {
+      if (typeof c === 'string') el.appendChild(document.createTextNode(c));
+      else if (c) el.appendChild(c);
+    });
+    return el;
+  } 
+
+  /* =========================
+     Create or update the manifest using a blob URL.
+     This manifest uses the provided PNG as icon (external URL).
+     ========================= */
+  function ensureManifest() {
+    try {
+      // Remove any existing manifest tag to replace it
+      const existing = document.querySelector('link[rel="manifest"]');
+      if (existing) existing.parentNode.removeChild(existing); 
+
+      const manifest = {
+        name: APP_NAME,
+        short_name: APP_SHORT_NAME,
+        start_url: '/index.html',
+        scope: '/',
+        display: 'standalone',
+        orientation: 'portrait',
+        theme_color: THEME_COLOR,
+        background_color: BACKGROUND_COLOR,
+        icons: [
+          { src: ICON_PNG_URL, sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: ICON_PNG_URL, sizes: '512x512', type: 'image/png', purpose: 'maskable any' }
+        ],
+        description: 'Binance Web3 Wallet - manage assets, connect wallets and explore DApps.'
+      }; 
+
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      manifestBlobUrl = URL.createObjectURL(blob);
+      const link = createEl('link', { attrs: { rel: 'manifest', href: manifestBlobUrl }});
+      document.head.appendChild(link);
+      console.info('PWA manifest injected/updated with PNG icon.');
+    } catch (err) {
+      console.error('Failed to create manifest:', err);
+    }
+  } 
+
+  /* =========================
+     Service Worker registration with fallback to inline blob SW
+     ========================= */
+  async function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service Worker not supported by this browser.');
+      return null;
+    } 
+
+    // Try to register server-provided /sw.js first
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      swRegistration = reg;
+      console.info('Service Worker registered from /sw.js');
+      await waitForServiceWorkerReady();
+      return swRegistration;
+    } catch (err) {
+      console.warn('Failed to register /sw.js; falling back to inline SW. Error:', err);
+    } 
+
+    // Inline worker (fallback): provides basic caching for specified resources
+    const swCode = `
+      const CACHE_NAME = '${CACHE_NAME}';
+      const PRECACHE = ${JSON.stringify(PRECACHE_URLS)}; 
+
+      self.addEventListener('install', (evt) => {
+        evt.waitUntil((async () => {
+          try {
+            const c = await caches.open(CACHE_NAME);
+            await c.addAll(PRECACHE);
+          } catch (e) {
+            // ignore failures for now
+          }
+          self.skipWaiting();
+        })());
+      }); 
+
+      self.addEventListener('activate', (evt) => {
+        evt.waitUntil((async () => {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => k === CACHE_NAME ? Promise.resolve() : caches.delete(k)));
+          await self.clients.claim();
+        })());
+      }); 
+
+      self.addEventListener('fetch', (evt) => {
+        evt.respondWith((async () => {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            const cached = await cache.match(evt.request);
+            if (cached) return cached;
+            const response = await fetch(evt.request);
+            if (evt.request.method === 'GET' && response && response.status === 200 && evt.request.url.startsWith(self.location.origin)) {
+              cache.put(evt.request, response.clone()).catch(()=>{});
+            }
+            return response;
+          } catch (err) {
+            if (evt.request.mode === 'navigate') {
+              const cache = await caches.open(CACHE_NAME);
+              const fallback = await cache.match('/index.html') || cache.match('/Home-page.html');
+              if (fallback) return fallback;
+            }
+            return new Response('Offline', { status: 503, statusText: 'Offline' });
+          }
+        })());
+      }); 
+
+      self.addEventListener('message', async (evt) => {
+        const data = evt.data || {};
+        if (data && data.type === 'CACHE_URLS' && Array.isArray(data.urls)) {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.addAll(data.urls);
+            const cs = await self.clients.matchAll();
+            cs.forEach(c => c.postMessage({ type: 'cached', urls: data.urls }));
+          } catch (e) {
+            const cs = await self.clients.matchAll();
+            cs.forEach(c => c.postMessage({ type: 'cache_failed', error: String(e) }));
+          }
+        }
+      });
+    `; 
+
+    try {
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      const blobUrl = URL.createObjectURL(blob);
+      const reg = await navigator.serviceWorker.register(blobUrl);
+      swRegistration = reg;
+      console.info('Inline Service Worker registered.');
+      await waitForServiceWorkerReady();
+      return swRegistration;
+    } catch (err2) {
+      console.error('Failed to register inline Service Worker:', err2);
+      return null;
+    }
+  } 
+
+  function waitForServiceWorkerReady(timeout = 10000) {
+    return new Promise((resolve) => {
+      let resolved = false;
+      navigator.serviceWorker.ready.then(reg => {
+        if (!resolved) { resolved = true; swRegistration = reg; resolve(reg); }
+      }).catch(() => {
+        if (!resolved) { resolved = true; resolve(null); }
+      });
+      setTimeout(() => { if (!resolved) { resolved = true; resolve(null); } }, timeout);
+    });
+  } 
+
+  /* =========================
+     Cache resources directly from the page (fallback)
+     ========================= */
+  async function cacheResourcesFromPage(urls = PRECACHE_URLS) {
+    if (!('caches' in window)) {
+      console.warn('Cache API not available.');
+      return false;
+    }
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      const toCache = Array.from(new Set((urls || []).filter(u => typeof u === 'string')));
+      await cache.addAll(toCache);
+      console.info('Resources cached via Cache API:', toCache);
+      return true;
+    } catch (err) {
+      console.warn('Failed to cache resources via page:', err);
+      return false;
+    }
+  } 
+
+  /* =========================
+     Install modal creation
+     This modal is styled to match the Binancereal-index.html "Get App" look.
+     It will include the provided <img id="binance-logo" .../> as requested.
+     ========================= */
+  function ensureInstallModalExists() {
+    if ($('pwa-install-modal')) return; 
+
+    const overlay = createEl('div', {
+      id: 'pwa-install-modal',
+      style: {
+        position: 'fixed',
+        inset: '0',
+        display: 'none',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.45)',
+        zIndex: 2147483647
+      }
+    }); 
+
+    const card = createEl('div', {
+      id: 'pwa-install-modal-card',
+      style: {
+        width: '380px',
+        maxWidth: '94%',
+        background: '#1E2329',
+        borderRadius: '14px',
+        padding: '18px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+        color: '#EAECEF',
+        border: '1px solid #2B3139'
+      }
+    }); 
+
+    // Header row with provided logo image element
+    const headerRow = createEl('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' } });
+    const logoImgWrapper = createEl('div', {});
+    const logoImg = createEl('img', {
+      attrs: { id: 'binance-logo', src: ICON_PNG_URL, alt: 'Binance Logo' },
+      style: { width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.06)' }
+    });
+    logoImgWrapper.appendChild(logoImg);
+    const title = createEl('div', { innerText: 'Install Binance Web3 Wallet', style: { fontSize: '18px', fontWeight: 700, color: '#FCD535' } });
+    headerRow.appendChild(logoImgWrapper);
+    headerRow.appendChild(title); 
+
+    const desc = createEl('div', {
+      innerText: 'Install the full app for faster access, offline support, and a home-screen experience. This will cache the app pages and register offline support.',
+      style: { fontSize: '13px', marginTop: '6px', color: '#9AA4B2' }
+    }); 
+
+    // Progress container
+    const progressContainer = createEl('div', { id: 'pwa-install-progress', style: { display: 'none', marginTop: '12px' } });
+    const progressOuter = createEl('div', { style: { width: '100%', height: '10px', background: '#242933', borderRadius: '8px', overflow: 'hidden', border: '1px solid #2B3139' }});
+    const progressBar = createEl('div', { id: 'pwa-install-progress-bar', style: { width: '0%', height: '100%', background: '#FCD535', transition: 'width 300ms ease' }});
+    progressOuter.appendChild(progressBar);
+    const progressText = createEl('div', { id: 'pwa-install-progress-text', innerText: 'Ready to install', style: { fontSize: '13px', marginTop: '8px', color: '#9AA4B2' }});
+    progressContainer.appendChild(progressOuter);
+    progressContainer.appendChild(progressText); 
+
+    // Actions
+    const actions = createEl('div', { style: { display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '14px' }});
+    const cancelBtn = createEl('button', { id: 'cancel-install-btn', innerText: 'Cancel', style: {
+      padding: '8px 12px', borderRadius: '10px', border: '1px solid #2B3139', background: '#242933', color: '#EAECEF', cursor: 'pointer', fontWeight: 600
+    }});
+    const installBtn = createEl('button', { id: 'install-now-btn', innerText: 'Get App', style: {
+      padding: '8px 14px', borderRadius: '10px', border: '0', background: '#FCD535', color: '#111', cursor: 'pointer', fontWeight: 800
+    }});
+    actions.appendChild(cancelBtn);
+    actions.appendChild(installBtn); 
+
+    card.appendChild(headerRow);
+    card.appendChild(desc);
+    card.appendChild(progressContainer);
+    card.appendChild(actions); 
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay); 
+
+    // Events
+    cancelBtn.addEventListener('click', hideInstallModal);
+    installBtn.addEventListener('click', onInstallNowClicked);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) hideInstallModal(); });
+  } 
+
+  function showInstallModal() {
+    ensureInstallModalExists();
+    const overlay = $('pwa-install-modal');
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+    const prog = $('pwa-install-progress'); if (prog) prog.style.display = 'none';
+    const bar = $('pwa-install-progress-bar'); if (bar) bar.style.width = '0%';
+    const text = $('pwa-install-progress-text'); if (text) text.innerText = 'Ready to install';
+    const installBtn = $('install-now-btn'); if (installBtn) { installBtn.innerText = (deferredPrompt ? 'Install Now' : 'Get App'); installBtn.disabled = false; installBtn.style.opacity = '1'; }
+  } 
+
+  function hideInstallModal() {
+    const overlay = $('pwa-install-modal');
+    if (!overlay) return;
+    overlay.style.display = 'none';
+  } 
+
+  /* =========================
+     Install flow: triggered when "Install Now" (or "Get App") clicked
+     - Use deferredPrompt if available.
+     - If not available, register SW and cache resources, show progress and final "App installed" UI.
+     - On iOS display Add to Home Screen instructions.
+     ========================= */
+  async function onInstallNowClicked(e) {
+    e && e.preventDefault && e.preventDefault(); 
+
+    const installBtn = $('install-now-btn');
+    const cancelBtn = $('cancel-install-btn');
+    const progress = $('pwa-install-progress');
+    const progressBar = $('pwa-install-progress-bar');
+    const progressText = $('pwa-install-progress-text'); 
+
+    if (installBtn) { installBtn.disabled = true; installBtn.style.opacity = '0.8'; installBtn.innerText = 'Starting...'; }
+    if (cancelBtn) cancelBtn.disabled = true; 
+
+    // If native install prompt available, prefer that
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        deferredPrompt = null; // only usable once
+        if (choice.outcome === 'accepted') {
+          // User accepted native prompt - wait a bit for browser to install
+          if (progress) progress.style.display = 'block';
+          if (progressBar) progressBar.style.width = '60%';
+          if (progressText) progressText.innerText = 'Finalizing native install...';
+          await waitForAppInstalledOrTimeout(12000);
+          // ensure SW & cache as extra step
+          await ensureSWAndCacheWithProgress(progressBar, progressText);
+          finalizeInstallUI(true);
+          return;
+        } else {
+          // dismissed -> fallback
+          if (progress) progress.style.display = 'block';
+          if (progressBar) progressBar.style.width = '20%';
+          if (progressText) progressText.innerText = 'Falling back to offline install...';
+          await fallbackInstallSequence(progressBar, progressText);
+          finalizeInstallUI(true, 'installed (fallback)');
+          return;
+        }
+      } catch (err) {
+        console.warn('deferredPrompt.prompt() error', err);
+        await fallbackInstallSequence(progressBar, progressText);
+        finalizeInstallUI(true, 'installed (fallback)');
+        return;
+      }
+    } 
+
+    // No native prompt -> run fallback
+    if (progress) progress.style.display = 'block';
+    if (progressBar) progressBar.style.width = '10%';
+    if (progressText) progressText.innerText = 'Registering service worker...';
+    await fallbackInstallSequence(progressBar, progressText);
+    finalizeInstallUI(true, 'installed (fallback)');
+  } 
+
+  function finalizeInstallUI(success = true, extraText = '') {
+    const installBtn = $('install-now-btn');
+    const cancelBtn = $('cancel-install-btn');
+    const progressText = $('pwa-install-progress-text'); 
+
+    if (installBtn) {
+      installBtn.innerText = success ? 'App installed' : 'Install';
+      installBtn.disabled = true;
+      installBtn.style.background = success ? '#16A34A' : '';
+    }
+    if (cancelBtn) cancelBtn.disabled = false;
+    if (progressText) progressText.innerText = success ? `App installed${extraText ? ' — ' + extraText : ''}` : 'Installation failed';
+    isAppInstalled = !!success; 
+
+    // Show a short toast-like feedback in page (non-blocking)
+    try {
+      const toast = createEl('div', { innerText: success ? 'Binance Web3 Wallet installed' : 'Install failed', style: {
+        position: 'fixed', right: '16px', bottom: '16px', background: '#111827', color: '#fff', padding: '10px 14px', borderRadius: '10px', zIndex: 2147483648, boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
+      }});
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    } catch (e) {} 
+
+    // Close modal shortly
+    setTimeout(hideInstallModal, 1400);
+  } 
+
+  /* =========================
+     Fallback install sequence:
+     - Register SW if needed; send it a message to cache URLs; fallback to page cache
+     ========================= */
+  async function fallbackInstallSequence(progressBar, progressText) {
+    try {
+      if (progressText) progressText.innerText = 'Registering service worker...';
+      const reg = await registerServiceWorker();
+      if (reg && reg.active) {
+        if (progressBar) progressBar.style.width = '35%';
+        if (progressText) progressText.innerText = 'Preparing app files...';
+        try {
+          // Ask SW to cache resources
+          reg.active.postMessage({ type: 'CACHE_URLS', urls: PRECACHE_URLS });
+        } catch (e) {
+          // PostMessage may fail on some browsers
+        }
+        // Also attempt page-side caching to be robust
+        await cacheResourcesFromPage(PRECACHE_URLS);
+        if (progressBar) progressBar.style.width = '90%';
+        if (progressText) progressText.innerText = 'Finalizing...';
+        await new Promise(r => setTimeout(r, 700));
+        maybeShowIOSInstructions();
+      } else {
+        // No SW active: fallback to using Cache API
+        if (progressBar) progressBar.style.width = '45%';
+        if (progressText) progressText.innerText = 'Caching app resources...';
+        await cacheResourcesFromPage(PRECACHE_URLS);
+        if (progressBar) progressBar.style.width = '95%';
+        if (progressText) progressText.innerText = 'Finalizing...';
+        await new Promise(r => setTimeout(r, 600));
+        maybeShowIOSInstructions();
+      }
+    } catch (err) {
+      console.error('fallbackInstallSequence error:', err);
+      if (progressText) progressText.innerText = 'Installation encountered issues — offline may be limited.';
+    }
+  } 
+
+  function maybeShowIOSInstructions() {
+    const ua = navigator.userAgent || '';
+    // On iOS Safari, provide instructions
+    if (/iphone|ipad|ipod/i.test(ua) && !window.matchMedia('(display-mode: standalone)').matches) {
+      const t = $('pwa-install-progress-text');
+      if (t) t.innerText = 'Tap the Share button → Add to Home Screen to install on iOS';
+    }
+  } 
+
+  /* =========================
+     Ensure SW is registered and cache resources with UI progress
+     ========================= */
+  async function ensureSWAndCacheWithProgress(progressBar, progressText) {
+    try {
+      if (progressText) progressText.innerText = 'Ensuring service worker...';
+      const reg = swRegistration || await registerServiceWorker();
+      if (reg && reg.active) {
+        if (progressBar) progressBar.style.width = '50%';
+        progressText && (progressText.innerText = 'Caching app files...');
+        reg.active.postMessage({ type: 'CACHE_URLS', urls: PRECACHE_URLS });
+        await cacheResourcesFromPage(PRECACHE_URLS);
+        if (progressBar) progressBar.style.width = '100%';
+        progressText && (progressText.innerText = 'App files cached');
+        return true;
+      } else {
+        await cacheResourcesFromPage(PRECACHE_URLS);
+        if (progressBar) progressBar.style.width = '100%';
+        if (progressText) progressText.innerText = 'App files cached (no service worker active)';
+        return true;
+      }
+    } catch (e) {
+      console.warn('ensureSWAndCacheWithProgress error', e);
+      return false;
+    }
+  } 
+
+  /* =========================
+     Wait for appinstalled event with timeout
+     ========================= */
+  function waitForAppInstalledOrTimeout(timeoutMs = 15000) {
+    return new Promise((resolve) => {
+      if (isAppInstalled) return resolve();
+      let done = false;
+      function onInstalled() {
+        if (done) return;
+        done = true;
+        window.removeEventListener('appinstalled', onInstalled);
+        resolve();
+      }
+      window.addEventListener('appinstalled', onInstalled);
+      setTimeout(() => {
+        if (done) return;
+        done = true;
+        window.removeEventListener('appinstalled', onInstalled);
+        resolve();
+      }, timeoutMs);
+    });
+  } 
+
+  /* =========================
+     Listen for SW messages for caching progress
+     ========================= */
+  function setupSWMessageHandler() {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.addEventListener('message', (evt) => {
+      const data = evt.data || {};
+      if (data && data.type) {
+        const progressBar = $('pwa-install-progress-bar');
+        const progressText = $('pwa-install-progress-text');
+        if (data.type === 'precached' || data.type === 'cached') {
+          if (progressBar) progressBar.style.width = '100%';
+          if (progressText) progressText.innerText = 'App files cached';
+          setTimeout(() => finalizeInstallUI(true), 700);
+        } else if (data.type === 'cache_failed') {
+          if (progressText) progressText.innerText = 'Caching failed — offline may be limited';
+          finalizeInstallUI(true, 'partial');
+        }
+      }
+    });
+  } 
+
+  /* =========================
+     Hook "Get App" buttons to show the install modal
+     This attaches to common IDs and CSS selectors found in the provided index.
+     ========================= */
+  function setupGetAppButtons() {
+    const handler = (e) => {
+      e && e.preventDefault && e.preventDefault();
+      showInstallModal();
+    }; 
+
+    const ids = ['get-app-btn', 'get-mobile-app', 'getApp', 'getMobileApp', 'install-pwa', 'getAppButton', 'get-app'];
+    ids.forEach(id => {
+      const el = $ (id) || document.querySelector(`#${id}`);
+      if (el) {
+        try { el.removeEventListener('click', handler); } catch (e) {}
+        el.addEventListener('click', handler);
+      }
+    }); 
+
+    // Also attach to any element with data-install-pwa
+    const nodes = document.querySelectorAll('[data-install-pwa]');
+    nodes.forEach(n => { n.removeEventListener('click', handler); n.addEventListener('click', handler); }); 
+
+    // Global helper
+    window.openStoreOrPrompt = function () {
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.includes('android')) {
+        window.open('https://play.google.com/store/apps', '_blank');
+      } else if (/(iphone|ipad|ipod)/i.test(navigator.userAgent)) {
+        window.open('https://apps.apple.com/', '_blank');
+      } else {
+        showInstallModal();
+      }
+    };
+  } 
+
+  /* =========================
+     Attach other buttons (auth/connect) similar to original script
+     ========================= */
+  async function loadAndRedirect(buttonId, loadingText = 'Processing...', redirectUrl = 'Home-page.html') {
+    const btn = $ (buttonId);
+    if (!btn) return;
+    const origText = btn.innerText;
+    try {
+      btn.innerText = loadingText; btn.disabled = true;
+      if (buttonId === 'connect-wallet') {
+        if (typeof window.ethereum !== 'undefined') {
+          try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            console.log('Connected account:', accounts && accounts[0]);
+            btn.innerText = 'Connected';
+          } catch (err) {
+            console.error('Wallet connection error', err);
+            alert('Wallet connection cancelled or failed. Please try again.');
+            btn.innerText = origText; btn.disabled = false; return;
+          }
+        } else {
+          alert('No injected Ethereum provider found. Please install MetaMask or another Web3 wallet.');
+          btn.innerText = origText; btn.disabled = false; return;
+        }
+      } else {
+        await new Promise(r => setTimeout(r, 900));
+        btn.innerText = (buttonId === 'signup-button') ? 'Signed Up' : 'Signed In';
+      }
+      try { document.getElementById('chat-widget') && (document.getElementById('chat-widget').style.display = 'block'); } catch (e) { console.warn(e); }
+      setTimeout(() => { window.location.assign(redirectUrl); }, 300);
+    } catch (e) {
+      console.error('Error in loadAndRedirect', e);
+      btn.innerText = origText; btn.disabled = false;
+    }
+  } 
+
+  function attachAuthButtons() {
+    const buttons = ['auth-button', 'signup-button', 'connect-wallet'];
+    buttons.forEach(id => {
+      const el = $ (id);
+      if (el) el.addEventListener('click', () => loadAndRedirect(id, (id === 'connect-wallet' ? 'Connecting...' : 'Processing...'), 'Home-page.html'));
+    });
+  } 
+
+  /* =========================
+     Market data loader (retained)
+     ========================= */
+  async function fetchMarketData() {
+    try {
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin&vs_currencies=usd&include_24hr_vol=true&include_24hr_change=true');
+      if (!response.ok) throw new Error('Network response not ok');
+      const data = await response.json();
+      if (data.bitcoin && $('btc-price')) $('btc-price').textContent = `$${Number(data.bitcoin.usd).toLocaleString()}`;
+      if (data.bitcoin && $('btc-volume')) $('btc-volume').textContent = `$${((data.bitcoin.usd_24h_vol || 0) / 1000000).toFixed(1)}M`;
+      if (data.ethereum && $('eth-price')) $('eth-price').textContent = `$${Number(data.ethereum.usd).toLocaleString()}`;
+      if (data.ethereum && $('eth-volume')) $('eth-volume').textContent = `$${((data.ethereum.usd_24h_vol || 0) / 1000000).toFixed(1)}M`;
+      if (data.binancecoin && $('bnb-price')) $('bnb-price').textContent = `$${Number(data.binancecoin.usd).toFixed(2)}`;
+      if (data.binancecoin && $('bnb-volume')) $('bnb-volume').textContent = `$${((data.binancecoin.usd_24h_vol || 0) / 1000000).toFixed(1)}M`;
+    } catch (error) {
+      console.error('Failed to fetch market data:', error);
+    }
+  } 
+
+  /* =========================
+     Initialization on DOM ready
+     ========================= */
+  function initOnDomReady() {
+    // 1) Ensure manifest links to PNG icon
+    ensureManifest(); 
+
+    // 2) Create install modal HTML (hidden)
+    ensureInstallModalExists(); 
+
+    // 3) Attempt to register Service Worker (async)
+    registerServiceWorker().then(reg => {
+      if (reg) {
+        swRegistration = reg;
+        setupSWMessageHandler();
+      }
+    }).catch(err => console.warn('SW registration error:', err)); 
+
+    // 4) Listen for beforeinstallprompt and capture deferredPrompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent automatic prompt
+      e.preventDefault();
+      deferredPrompt = e;
+      console.info('beforeinstallprompt captured and stored.');
+      // Optionally show a small banner or change UI to indicate install is available
+      const banner = $('pwa-install-banner');
+      if (banner) banner.style.display = 'flex';
+    }); 
+
+    // 5) App installed event
+    window.addEventListener('appinstalled', (evt) => {
+      console.info('PWA installed event received:', evt);
+      isAppInstalled = true;
+      finalizeInstallUI(true);
+    }); 
+
+    // 6) Wire "Get App" buttons and others
+    setupGetAppButtons();
+    attachAuthButtons(); 
+
+    // 7) Market data
+    fetchMarketData();
+    setInterval(fetchMarketData, 30000);
+  } 
+
+  // DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOnDomReady);
+  } else {
+    initOnDomReady();
+  } 
+
+  /* =========================
+     Public helpers for debugging and manual control
+     ========================= */
+  window.pwaInstaller = {
+    showInstallModal,
+    hideInstallModal,
+    ensureManifest,
+    registerServiceWorker,
+    cacheResourcesFromPage,
+    isAppInstalled: () => isAppInstalled
+  }; 
+
+})();
+</script>
