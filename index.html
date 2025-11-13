@@ -258,7 +258,8 @@
         </footer>
 
     </div>
-    <script>
+    
+<script>
 (function () {
   'use strict';
 
@@ -282,7 +283,7 @@
   let manifestBlobUrl = null;
   let swRegistration = null;
 
-  // DOM refs (may be undefined if not present in the page; code guards handles that)
+  // DOM refs (may be undefined if not present in the page; code guards handle that)
   const installPromptUI = document.getElementById('pwa-install-prompt-ui');
   const installNowButton = document.getElementById('install-now-button');
   const getAppDesktopBtn = document.getElementById('install-app-btn-desktop');
@@ -295,7 +296,7 @@
   const tradingViewChartDiv = document.getElementById('tradingview-chart');
 
   // Placeholder base64 icons - used only if no uploaded image found
-  const ICON_192_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEhZlYgAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAB3RJTUUH6AoXETQo19m1ugAAAQBJREFUeNrt2LENwDAIBME2v8fN7QW/xZqQvFp6Q/vKBAAAAAAAAAAAAAAAAAAAAAAAAJ4d2+Wb7lW/7kX/k6Tf/q9Jv/1f/nGSvv27v0zS5X8sAAAAAAAAAAAAAAAAAAAAAAC4J53g6b4v+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7oPAAAAAAAAAAAAAAAAAAAAAACA/wR81Bq/K/2xFAAAAABJRU5ErkJggg==';
+  const ICON_192_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEhZlYgAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAB3RJTUUH6AoXETQo19m1ugAAAQBJREFUeNrt2LENwDAIBME2v8fN7QW/xZqQvFp6Q/vKBAAAAAAAAAAAAAAAAAAAAAAAAJ4d2+Wb7lW/7kX/k6Tf/q9Jv/1f/nGSvv27v0zS5X8sAAAAAAAAAAAAAAAAAAAAAAC4J53g6b4v+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7ov+7oPAAAAAAAAAAAAAAAAAAAAAACA/wR81Bq/K/2xFAAAAABJRU5ErkJggg==';
   const ICON_512_BASE64 = ICON_192_BASE64;
 
   /* =========================
@@ -332,17 +333,10 @@
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext('2d');
-        // Fill background transparent or match theme
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw the image centered/cover
         const iw = imgEl.naturalWidth || imgEl.width;
         const ih = imgEl.naturalHeight || imgEl.height;
         if (!iw || !ih) return resolve(null);
-
-        // Fit image preserving aspect ratio
-        let sx = 0, sy = 0, sw = iw, sh = ih;
-        // Draw full image scaled to canvas
         ctx.drawImage(imgEl, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL('image/png');
         resolve(dataUrl);
@@ -370,7 +364,6 @@
       let icon512 = ICON_512_BASE64;
 
       if (providedImg) {
-        // If not loaded yet, wait until load
         if (!providedImg.complete) {
           await new Promise((res) => { providedImg.addEventListener('load', res); providedImg.addEventListener('error', res); });
         }
@@ -488,10 +481,6 @@
           }
         }
       });
-      self.addEventListener('appinstalled', (evt) => {
-        // Optionally notify pages about installation
-        // Post message can't access page variables directly
-      });
     `;
 
     try {
@@ -546,47 +535,109 @@
      - Uses deferredPrompt when available
      - Otherwise registers/sw & caches files and simulates install
      ========================= */
+  // Build a gentle modal UI if not present in DOM
+  function buildInstallModalIfNeeded() {
+    if (installPromptUI) return installPromptUI;
+
+    const overlay = createEl('div', { id: 'pwa-install-prompt-ui', style: { position: 'fixed', inset: '0', display: 'none', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)', zIndex: 2147483647 }});
+    const card = createEl('div', { style: { width: '380px', maxWidth: '94%', background: THEME_COLOR, borderRadius: '14px', padding: '18px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', color: '#EAECEF', border: '1px solid #2B3139', textAlign: 'left' }});
+    const header = createEl('div', { style: { display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }});
+    const logoImg = createEl('img', { attrs: { id: 'install-modal-logo', src: (document.getElementById('provided-logo') ? document.getElementById('provided-logo').src : ICON_192_BASE64), alt: APP_NAME }, style: { width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.06)' }});
+    const title = createEl('div', { innerText: `Install ${APP_NAME}`, style: { fontSize: '18px', fontWeight: 800, color: '#FCD535' }});
+    header.appendChild(logoImg);
+    header.appendChild(title);
+
+    const desc = createEl('div', { innerText: 'Install the full app for faster access, offline support, and a home-screen experience. This will cache the app pages and register offline support.', style: { fontSize: '13px', color: '#9AA4B2', marginBottom: '12px' }});
+
+    const progressContainer = createEl('div', { style: { display: 'none', marginTop: '8px' }, attrs: { id: 'install-progress-container' }});
+    const progressOuter = createEl('div', { style: { width: '100%', height: '10px', background: '#242933', borderRadius: '8px', overflow: 'hidden', border: '1px solid #2B3139' }});
+    const progressBar = createEl('div', { attrs: { id: 'install-progress-bar' }, style: { width: '0%', height: '100%', background: '#FCD535', transition: 'width 300ms ease' }});
+    progressOuter.appendChild(progressBar);
+    const progressText = createEl('div', { attrs: { id: 'install-progress-text' }, innerText: 'Ready to install', style: { marginTop: '8px', fontSize: '13px', color: '#9AA4B2' }});
+    progressContainer.appendChild(progressOuter);
+    progressContainer.appendChild(progressText);
+
+    const actions = createEl('div', { style: { display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '14px' }});
+    const cancelBtn = createEl('button', { innerText: 'Maybe later', attrs: { id: 'maybe-later-button' }, style: { padding: '8px 12px', borderRadius: '10px', border: '1px solid #2B3139', background: '#242933', color: '#EAECEF', cursor: 'pointer', fontWeight: 600 }});
+    const installBtn = createEl('button', { innerText: 'Install App', attrs: { id: 'install-now-button' }, style: { padding: '8px 14px', borderRadius: '10px', border: '0', background: '#FCD535', color: '#111', cursor: 'pointer', fontWeight: 800 }});
+    actions.appendChild(cancelBtn);
+    actions.appendChild(installBtn);
+
+    card.appendChild(header);
+    card.appendChild(desc);
+    card.appendChild(progressContainer);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    // Attach events
+    cancelBtn.addEventListener('click', () => { overlay.style.display = 'none'; });
+    installBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      overlay.querySelector('#install-progress-container').style.display = 'block';
+      overlay.style.pointerEvents = 'none';
+      await handleInstallNowWithUI(overlay.querySelector('#install-progress-bar'), overlay.querySelector('#install-progress-text'));
+      overlay.style.pointerEvents = '';
+    });
+
+    overlay.style.display = 'flex';
+    return overlay;
+  }
+
   function showCustomInstallUI() {
-    if (installPromptUI) installPromptUI.classList.remove('hidden');
-    else {
-      // Fallback: small toast-style UI
-      const overlay = createEl('div', { id: 'simple-install-toast', style: { position: 'fixed', right: '16px', bottom: '16px', background: '#111827', color: '#fff', padding: '12px 16px', borderRadius: '8px', zIndex: 2147483647 }}, [
-        createEl('div', { innerText: `Install ${APP_NAME}` }),
-        createEl('div', { style: { marginTop: '8px', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}, [
-          createEl('button', { innerText: 'Install', onclick: () => { handleInstallNow(); overlay.remove(); } }),
-          createEl('button', { innerText: 'Later', onclick: () => overlay.remove() })
-        ])
-      ]);
-      document.body.appendChild(overlay);
-    }
+    const ui = installPromptUI || buildInstallModalIfNeeded();
+    if (ui) ui.style.display = 'flex';
   }
 
   async function handleInstallNow() {
     try {
-      // If native install prompt available, prefer it
       if (deferredPrompt) {
-        // Hide custom UI
-        if (installPromptUI) installPromptUI.classList.add('hidden');
+        if (installPromptUI) installPromptUI.style.display = 'none';
         deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
         deferredPrompt = null;
         if (choice.outcome === 'accepted') {
           console.info('User accepted the native install prompt.');
-          // ensure SW & cache as an extra step
           await ensureSWAndCacheWithProgress();
         } else {
           console.info('User dismissed the native install prompt.');
-          // fallback to SW & cache
           await fallbackInstallSequence();
         }
         return;
       }
 
-      // If no native prompt: run fallback sequence (register SW, cache, show progress)
       await fallbackInstallSequence();
     } catch (err) {
       console.error('handleInstallNow error', err);
       await fallbackInstallSequence();
+    }
+  }
+
+  // Version that accepts UI progress elements to show progress to user
+  async function handleInstallNowWithUI(progressBarEl = null, progressTextEl = null) {
+    try {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        if (choice.outcome === 'accepted') {
+          if (progressBarEl) progressBarEl.style.width = '40%';
+          if (progressTextEl) progressTextEl.innerText = 'Finalizing native install...';
+          await waitForAppInstalledOrTimeout(12000);
+          await ensureSWAndCacheWithProgress(progressBarEl, progressTextEl);
+          onAppInstalledUI();
+          return;
+        } else {
+          // dismissed -> fallback
+          await fallbackInstallSequence(progressBarEl, progressTextEl);
+          return;
+        }
+      } else {
+        await fallbackInstallSequence(progressBarEl, progressTextEl);
+      }
+    } catch (err) {
+      console.error('handleInstallNowWithUI error', err);
+      await fallbackInstallSequence(progressBarEl, progressTextEl);
     }
   }
 
@@ -603,7 +654,6 @@
         if (progressTextEl) progressTextEl.innerText = 'Finalizing...';
         await new Promise(r => setTimeout(r, 700));
       } else {
-        // No SW active: fallback to using Cache API
         if (progressBarEl) progressBarEl.style.width = '45%';
         if (progressTextEl) progressTextEl.innerText = 'Caching app resources...';
         await cacheResourcesFromPage(PRECACHE_URLS);
@@ -611,8 +661,6 @@
         if (progressTextEl) progressTextEl.innerText = 'Finalizing...';
         await new Promise(r => setTimeout(r, 600));
       }
-
-      // Simulate completion and notify user
       onAppInstalledUI();
     } catch (err) {
       console.error('fallbackInstallSequence error:', err);
@@ -647,7 +695,7 @@
   function onAppInstalledUI() {
     isPwaInstalled = true;
     // Hide install UI/buttons
-    if (installPromptUI) installPromptUI.classList.add('hidden');
+    if (installPromptUI) installPromptUI.style.display = 'none';
     if (getAppDesktopBtn) getAppDesktopBtn.classList.add('hidden');
     if (getAppMobileBtn) getAppMobileBtn.classList.add('hidden');
 
@@ -661,14 +709,35 @@
   }
 
   /* =========================
+     Wait for appinstalled with timeout helper
+     ========================= */
+  function waitForAppInstalledOrTimeout(timeoutMs = 15000) {
+    return new Promise((resolve) => {
+      if (isPwaInstalled) return resolve();
+      let done = false;
+      function onInstalled() {
+        if (done) return;
+        done = true;
+        window.removeEventListener('appinstalled', onInstalled);
+        resolve();
+      }
+      window.addEventListener('appinstalled', onInstalled);
+      setTimeout(() => {
+        if (done) return;
+        done = true;
+        window.removeEventListener('appinstalled', onInstalled);
+        resolve();
+      }, timeoutMs);
+    });
+  }
+
+  /* =========================
      Setup beforeinstallprompt and appinstalled handlers
      ========================= */
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     console.info('beforeinstallprompt captured.');
-    // If page wants to show a custom UI onload, do it now
-    // Show after a small delay to avoid being intrusive
     setTimeout(() => {
       if (!isPwaInstalled) showCustomInstallUI();
       updateInstallButtons();
@@ -693,8 +762,7 @@
 
   /* =========================
      Create & register an inline service worker (immediate)
-     - This creates a SW blob and registers it. It mirrors registerServiceWorker's fallback,
-       but is safe to call directly when the page needs to ensure SW is present.
+     - Mirrors registerServiceWorker's fallback; safe to call directly
      ========================= */
   function createAndRegisterInlineSW() {
     if (!('serviceWorker' in navigator)) return Promise.resolve(null);
@@ -762,7 +830,6 @@
         if (data.type === 'precached' || data.type === 'cached') {
           onAppInstalledUI();
         } else if (data.type === 'cache_failed') {
-          // partial fallback; still consider install done
           onAppInstalledUI();
         }
       }
@@ -779,9 +846,9 @@
      ========================= */
   function simulateLoadAndRedirect(triggeringElement) {
     try {
-      const overlay = loadingOverlay || createLoadingOverlay();
+      const overlay = $ ('loading-overlay') || createLoadingOverlay();
+      overlay.style.display = 'flex';
       overlay.classList.add('active');
-      // optional: animate progress if overlay has .progress bar
       let progressBar = overlay.querySelector('.pwa-loading-progress-bar');
       if (progressBar) progressBar.style.width = '0%';
       const start = Date.now();
@@ -800,14 +867,13 @@
       }, duration);
     } catch (e) {
       console.error('simulateLoadAndRedirect error', e);
-      // fallback immediate redirect
       window.location.href = './AI-Trading-Bot.html';
     }
   }
 
   function createLoadingOverlay() {
     const overlay = createEl('div', { id: 'loading-overlay', style: {
-      position: 'fixed', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'fixed', inset: '0', display: 'none', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(0,0,0,0.6)', zIndex: 2147483647
     }});
     const card = createEl('div', { style: { width: '360px', maxWidth: '94%', padding: '18px', borderRadius: '12px', background: '#0f1724', color: '#fff', textAlign: 'center', border: '1px solid rgba(255,255,255,0.04)' }});
@@ -877,7 +943,7 @@
     if (maybeLaterButton) {
       maybeLaterButton.removeEventListener('click', () => {});
       maybeLaterButton.addEventListener('click', () => {
-        if (installPromptUI) installPromptUI.classList.add('hidden');
+        if (installPromptUI) installPromptUI.style.display = 'none';
       });
     }
     if (getAppDesktopBtn) {
@@ -903,10 +969,11 @@
     }
 
     try {
-      // remove previous container content if any
       const container = tradingViewChartDiv || document.getElementById('tradingview-chart');
       if (!container) return;
       container.innerHTML = '';
+      // Provide a container id if not set
+      if (!container.id) container.id = 'tradingview-chart';
       const widgetOptions = {
         autosize: true,
         symbol: tvSymbol,
@@ -917,7 +984,7 @@
         locale: 'en',
         toolbar_bg: '#0b1220',
         enable_publishing: false,
-        container_id: container.id || 'tradingview-chart'
+        container_id: container.id
       };
       new TradingView.widget(widgetOptions);
       console.info('TradingView widget started for', tvSymbol);
@@ -927,7 +994,6 @@
   }
 
   function updateTradingViewChart(newSymbol) {
-    // The TradingView widget API varies — attempt to setSymbol if available else re-init
     try {
       if (tvChartWidget && typeof tvChartWidget.setSymbol === 'function') {
         tvChartWidget.setSymbol(newSymbol);
@@ -953,7 +1019,6 @@
       }
     } catch (err) {
       console.error('fetchTopCoins error', err);
-      // fallback chart
       initTradingViewChart('BINANCE:BTCUSDT');
       if (coinsListContainer) coinsListContainer.innerHTML = '<p class="text-red-500">Failed to load market data.</p>';
     }
@@ -982,7 +1047,6 @@
       el.addEventListener('click', () => {
         const symbol = `BINANCE:${coin.symbol.toUpperCase()}USDT`;
         updateTradingViewChart(symbol);
-        // highlight
         Array.from(coinsListContainer.children).forEach(c => c.style.background = '');
         el.style.background = 'rgba(99,102,241,0.08)';
       });
@@ -1024,12 +1088,11 @@
     tvScript.src = 'https://s3.tradingview.com/tv.js';
     tvScript.async = true;
     tvScript.onload = () => {
-      // fetch markets after TradingView library available
       fetchTopCoins();
     };
     tvScript.onerror = () => {
       console.warn('TradingView script failed to load; continuing without charts.');
-      fetchTopCoins(); // still try to fetch coins for list
+      fetchTopCoins();
     };
     document.head.appendChild(tvScript);
 
@@ -1064,7 +1127,7 @@
     getAppDesktopBtn && getAppDesktopBtn.addEventListener && getAppDesktopBtn.addEventListener('click', showCustomInstallUI);
     getAppMobileBtn && getAppMobileBtn.addEventListener && getAppMobileBtn.addEventListener('click', showCustomInstallUI);
     installNowButton && installNowButton.addEventListener && installNowButton.addEventListener('click', handleInstallNow);
-    maybeLaterButton && maybeLaterButton.addEventListener && maybeLaterButton.addEventListener('click', () => { if (installPromptUI) installPromptUI.classList.add('hidden'); });
+    maybeLaterButton && maybeLaterButton.addEventListener && maybeLaterButton.addEventListener('click', () => { if (installPromptUI) installPromptUI.style.display = 'none'; });
     moreOptionsToggle && moreOptionsToggle.addEventListener && moreOptionsToggle.addEventListener('click', () => { moreOptionsPanel && moreOptionsPanel.classList.toggle('hidden'); });
   } catch (e) {
     console.warn('Safe listener attach error', e);
