@@ -233,17 +233,19 @@
                 </div>
             </section>
 
-            <!-- PWA Install Prompt (Custom UI) -->
-            <div id="pwa-install-prompt-ui" class="install-prompt hidden">
-                <h3 class="text-2xl font-bold mb-2 text-[--accent-color]">Install App</h3>
-                <p class="text-gray-300 mb-4">Install the Exness Auto-Trading Bot for the best mobile experience and offline access!</p>
-                <div class="flex justify-center gap-3">
-                    <button id="install-now-button" class="btn-primary text-sm px-6">Install Now</button>
-                    <button id="maybe-later-button" class="btn-secondary text-sm px-6">Maybe Later</button>
-                </div>
+                <!-- PWA Install Banner -->
+    <div id="pwa-install-banner" class="pwa-install-banner glass-effect rounded-lg p-4 max-w-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <h4 class="font-semibold text-white">Install App</h4>
+                <p class="text-sm text-binance-text">Install the Exness Auto-Trading Bot for the best mobile experience and offline access!</p>
             </div>
-
-        </main>
+            <div class="flex gap-2">
+                <button id="install-pwa" class="bg-binance-yellow text-black px-3 py-1 rounded-md text-sm font-medium">Install</button>
+                <button id="dismiss-banner" class="text-binance-text text-sm">✕</button>
+            </div>
+        </div>
+    </div>
 
         <!-- Global Footer -->
         <footer class="bg-[--secondary-bg] border-t border-[--border-color] mt-16 py-8">
@@ -646,7 +648,7 @@
 
     // Show a short toast-like feedback in page (non-blocking)
     try {
-      const toast = createEl('div', { innerText: success ? 'Binance Web3 Wallet installed' : 'Install failed', style: {
+      const toast = createEl('div', { innerText: success ? 'Exness Auto-Trading Bot installed' : 'Install failed', style: {
         position: 'fixed', right: '16px', bottom: '16px', background: '#111827', color: '#fff', padding: '10px 14px', borderRadius: '10px', zIndex: 2147483648, boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
       }});
       document.body.appendChild(toast);
