@@ -1431,8 +1431,8 @@
                 default: return `Chain ID: ${chainId}`;
             }
         }
-
-// -------------------------------------------------------
+        
+        // -------------------------------------------------------
 // Fetch Market Data from CoinGecko Public API
 // -------------------------------------------------------
 async function fetchMarketData() {
@@ -1446,7 +1446,7 @@ async function fetchMarketData() {
         const data = await response.json();
         marketDataCache = data;
 
-        // Fetch global data (market cap, volume, dominance, etc.)
+        // Fetch global metrics
         const globalResponse = await fetch(`${COINGECKO_API}/global`);
         const globalData = await globalResponse.json();
 
@@ -1457,9 +1457,16 @@ async function fetchMarketData() {
         if (appState?.isLoggedIn) {
             renderHomeUI();
             renderWalletMarketList(data);
+
+            // -----------------------------------
+            // 🔥 NEW: Load Trending Coins on Login
+            // -----------------------------------
+            if (typeof loadTrendingCoins === "function") {
+                loadTrendingCoins();
+            }
         }
 
-        // Render Market Page list if available
+        // Render Market Page list
         renderMarkets('default');
 
     } catch (error) {
@@ -1488,7 +1495,7 @@ function renderLandingPageMarket(globalData, coins) {
     renderTopCoinsList(listElement, coins.slice(0, 5));
 }
 
-// -------------------------------------------------------
+// ----------------------------}---------------------------
 // Render Wallet Market List
 // -------------------------------------------------------
 function renderWalletMarketList(coins) {
