@@ -519,40 +519,6 @@
 
       loadTrendingCoins();
 
-      // TradingView Chart
-      function initTradingView() {
-        if (typeof TradingView === "undefined") return;
-
-        const existing = document.querySelector("#tvchart iframe");
-        if (existing) existing.remove();
-
-        new TradingView.widget({
-          autosize: true,
-          symbol: "BINANCE:BTCUSDT",
-          interval: "15",
-          timezone: "Etc/UTC",
-          theme: "dark",
-          style: "1",
-          locale: "en",
-          toolbar_bg: "#111",
-          enable_publishing: false,
-          hide_top_toolbar: false,
-          container_id: "tvchart",
-        });
-      }
-
-      if (!window.tradingViewLoaded) {
-        const script = document.createElement("script");
-        script.src = "https://s3.tradingview.com/tv.js";
-        script.onload = () => {
-          window.tradingViewLoaded = true;
-          initTradingView();
-        };
-        document.body.appendChild(script);
-      } else {
-        initTradingView();
-      }
-    });
   </script>
 
   <!-- ===== 5. RECENT ACTIVITIES ===== -->
