@@ -538,10 +538,22 @@
             </div>
             
             <!-- Live Trade Chart -->
-            <div class="mb-6">
-                <h3 class="text-xl font-bold mb-3">Live Trading Chart (<span id="tradeAssetSymbol">BTC/USDT</span>)</h3>
-                <div id="tradeLiveChart" class="tv-chart-container bg-gray-900 card"></div>
-            </div>
+<div class="mb-6 w-full">
+    <h3 class="text-xl font-bold mb-3">
+        Live Trading Chart (<span id="tradeAssetSymbol">BTC/USDT</span>)
+    </h3>
+
+    <div id="tradeLiveChart"
+         class="tv-chart-container bg-gray-900 rounded-xl shadow-lg border border-gray-800"
+         style="
+            width: 100%;
+            height: 480px;
+            min-height: 420px;
+            border-radius: 14px;
+            overflow: hidden;
+         ">
+    </div>
+</div>
 
             <!-- Place Trade Section -->
             <div id="placeTradeSection" class="card p-4 space-y-4">
@@ -2474,33 +2486,49 @@ function renderTradeUI() {
                 </div>
             `).join('');
         }
-
-       function initializeTradingViewChart(containerId, symbol) {
-             // TradingView widget requires the container to be visible when initialized.
-            if (typeof window.TradingView !== 'undefined' && document.getElementById(containerId)) {
-                new window.TradingView.widget({
-                    "container_id": containerId,
-                    "symbol": symbol,
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "en",
-                    "toolbar_bg": "#f1f3f6",
-                    "enable_publishing": false,
-                    "hide_side_toolbar": true,
-                    "allow_symbol_change": true,
-                    "save_image": false,
-                    "details": false,
-                    "hotlist": false,
-                    "calendar": false,
-                    "studies": [
-                        "MACD@tv-basicstudies",
-                        "StochasticRSI@tv-basicstudies"
-                    ]
-                });
-            }
-        }
+        
+   function initializeTradingViewChart(containerId, symbol) {
+    const container = document.getElementById(containerId);
+    if (typeof window.TradingView !== 'undefined' && container) {
+        new window.TradingView.widget({
+            "container_id": containerId,
+            "symbol": symbol,
+            "interval": "D",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",                  // 1 = candlestick
+            "locale": "en",
+            "toolbar_bg": "#f1f3f6",
+            "enable_publishing": false,
+            "hide_side_toolbar": true,
+            "allow_symbol_change": true,
+            "save_image": false,
+            "details": false,
+            "hotlist": false,
+            "calendar": false,
+            "studies": [
+                "MACD@tv-basicstudies",
+                "StochasticRSI@tv-basicstudies"
+            ],
+            "withdateranges": true,
+            "hideideas": true,
+            "enabled_features": [
+                "study_templates",
+                "compare_symbol",
+                "use_localstorage_for_settings"
+            ],
+            "disabled_features": [
+                "header_widget",
+                "timeframes_toolbar",
+                "left_toolbar",
+                "header_compare",
+                "header_symbol_search",
+                "header_settings"
+            ],
+            "autosize": true  // makes chart fill the container dynamically
+        });
+       }
+       }
 
         // =======================================================
         // 11. GEMINI CHATBOT LOGIC
