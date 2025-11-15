@@ -2487,16 +2487,16 @@ function renderTradeUI() {
             `).join('');
         }
         
-   function initializeTradingViewChart(containerId, symbol) {
-    const container = document.getElementById(containerId);
-    if (typeof window.TradingView !== 'undefined' && container) {
+function initializeTradingViewChart(containerId, symbol) {
+    // TradingView widget requires the container to be visible when initialized.
+    if (typeof window.TradingView !== 'undefined' && document.getElementById(containerId)) {
         new window.TradingView.widget({
             "container_id": containerId,
             "symbol": symbol,
             "interval": "D",
             "timezone": "Etc/UTC",
             "theme": "dark",
-            "style": "1",                  // 1 = candlestick
+            "style": "1",                  // 1 = candlestick, 2 = bar, 3 = line, etc.
             "locale": "en",
             "toolbar_bg": "#f1f3f6",
             "enable_publishing": false,
@@ -2524,11 +2524,10 @@ function renderTradeUI() {
                 "header_compare",
                 "header_symbol_search",
                 "header_settings"
-            ],
-            "autosize": true  // makes chart fill the container dynamically
+            ]
         });
-       }
-       }
+    }
+}
 
         // =======================================================
         // 11. GEMINI CHATBOT LOGIC
