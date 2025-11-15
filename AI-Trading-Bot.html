@@ -2887,119 +2887,102 @@ function renderTradeUI() {
         }
 
         
-    // =======================================================
-// 14. INITIALIZATION AND EVENT HANDLERS
-// =======================================================
+            // =======================================================
+        // 14. INITIALIZATION AND EVENT HANDLERS
+        // =======================================================
+        
+        function initializeApp() {
+            loadState(); // Load state before anything else
+            setupPwa();  // Set up PWA/Service Worker
 
-function initializeApp() {
-    loadState();  // Load state before anything else
-    setupPwa();   // Set up PWA / Service Worker
+            // Global navigation click handler
+            document.querySelectorAll('.nav-tab').forEach(button => {
+                button.onclick = (e) => showPage(e.currentTarget.dataset.page);
+            });
+            
+            // Landing page actions
+            document.getElementById('landingMoreBtn')?.addEventListener('click', (e) => {
+                document.getElementById('landingMoreMenu')?.classList.toggle('hidden');
+                e.stopPropagation();
+            });
+            document.getElementById('confirmIDLoginBtn').onclick = loginWithID;
+            document.getElementById('walletConnectBtn').onclick = connectWallet;
+            document.getElementById('manualConnectBtn').onclick = manualConnect;
+            document.getElementById('confirmConnectionBtn').onclick = confirmWalletConnection;
 
-    // Global navigation click handler
-    document.querySelectorAll('.nav-tab').forEach(button => {
-        button.onclick = (e) => showPage(e.currentTarget.dataset.page);
-    });
+            // Header/Menu actions
+            document.getElementById('moreBtn')?.addEventListener('click', (e) => {
+                document.getElementById('moreMenu')?.classList.toggle('hidden');
+                e.stopPropagation();
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#moreBtn')) closeMoreMenu();
+                if (!e.target.closest('#landingMoreBtn')) closeLandingMoreMenu();
+                if (!e.target.closest('#selectNetworkBtn') && !e.target.closest('#withdrawalNetworkDropdown')) {
+                    document.getElementById('withdrawalNetworkDropdown')?.classList.add('hidden');
+                }
+            });
 
-    // Landing page actions
-    document.getElementById('landingMoreBtn')?.addEventListener('click', (e) => {
-        document.getElementById('landingMoreMenu')?.classList.toggle('hidden');
-        e.stopPropagation();
-    });
+            // Settings listeners
+            document.getElementById('notificationToggle').addEventListener('change', (e) => {
+                appState.settings.notificationsOn = e.target.checked;
+                document.getElementById('notificationsPageToggle').checked = e.target.checked;
+                saveState();
+                showMessage(`Notifications turned ${e.target.checked ? 'ON' : 'OFF'}.`);
+            });
+            document.getElementById('notificationsPageToggle').addEventListener('change', (e) => {
+                appState.settings.notificationsOn = e.target.checked;
+                document.getElementById('notificationToggle').checked = e.target.checked;
+                saveState();
+                showMessage(`Notifications turned ${e.target.checked ? 'ON' : 'OFF'}.`);
+            });
+            document.getElementById('strategySelect').addEventListener('change', (e) => {
+                appState.settings.strategy = e.target.value;
+                saveState();
+                showMessage(`AI strategy set to ${e.target.value}.`);
+            });
 
-    document.getElementById('confirmIDLoginBtn').onclick = loginWithID;
-    document.getElementById('walletConnectBtn').onclick = connectWallet;
-    document.getElementById('manualConnectBtn').onclick = manualConnect;
-    document.getElementById('confirmConnectionBtn').onclick = confirmWalletConnection;
+            // Initial data load and view setup
+            fetchMarketData();
+            
+            // Set initial page based on persistence
+            const initialPage = appState.isLoggedIn ? appState.currentPage : 'landingPage';
+            showPage(initialPage, true);
+            
+            // Start persistent timers
+            if (appState.isLoggedIn) {
+                if (appState.trade.active) startTradeCountdown();
+                if (appState.withdrawal.status === 'Processing') startWithdrawalCountdown();
+                checkWithdrawalSuspension();
+            }
 
-    // Header/Menu actions
-    document.getElementById('moreBtn')?.addEventListener('click', (e) => {
-        document.getElementById('moreMenu')?.classList.toggle('hidden');
-        e.stopPropagation();
-    });
+            // Load charts if logged in and page is home/trade (will re-init on showPage)
+            if (appState.isLoggedIn && (initialPage === 'home' || initialPage === 'tradePage' || initialPage === 'earningsPage')) {
+                initializeTradingViewChart('tvchart', TRADINGVIEW_SYMBOL);
+                initializeTradingViewChart('tradeLiveChart', appState.trade.asset);
+                initializeTradingViewChart('earningsLiveChart', appState.trade.asset);
+            }
+            
+            // Periodic background tasks
+            setInterval(() => {
+                if (appState.isLoggedIn) {
+                    renderHomeUI(); // Updates balance, holdings, activities, suspension banner
+                }
+            }, 5000); // UI refresh every 5s
 
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#moreBtn')) closeMoreMenu();
-        if (!e.target.closest('#landingMoreBtn')) closeLandingMoreMenu();
-        if (!e.target.closest('#selectNetworkBtn') && !e.target.closest('#withdrawalNetworkDropdown')) {
-            document.getElementById('withdrawalNetworkDropdown')?.classList.add('hidden');
-        }
-    });
+            setInterval(fetchMarketData, 60000); // Market data refresh every 60s
+            setInterval(loadDailyMarketUpdates, 12 * 60 * 60 * 1000); // News check every 12 hours
+            
+            // Initial call for daily updates (will check timestamp)
+            loadDailyMarketUpdates(); 
+        }    // Load Market Data (Trending)
+     loadTrendingCoins();
 
-    // Settings listeners
-    document.getElementById('notificationToggle')?.addEventListener('change', (e) => {
-        appState.settings.notificationsOn = e.target.checked;
-        document.getElementById('notificationsPageToggle').checked = e.target.checked;
-        saveState();
-        showMessage(`Notifications turned ${e.target.checked ? 'ON' : 'OFF'}.`);
-    });
+    // Load Chart
+    loadTradingView();
+     }  
 
-    document.getElementById('notificationsPageToggle')?.addEventListener('change', (e) => {
-        appState.settings.notificationsOn = e.target.checked;
-        document.getElementById('notificationToggle').checked = e.target.checked;
-        saveState();
-        showMessage(`Notifications turned ${e.target.checked ? 'ON' : 'OFF'}.`);
-    });
-
-    document.getElementById('strategySelect')?.addEventListener('change', (e) => {
-        appState.settings.strategy = e.target.value;
-        saveState();
-        showMessage(`AI strategy set to ${e.target.value}.`);
-    });
-
-    // Initial data load
-    fetchMarketData();
-
-    // Determine initial page
-    const initialPage = appState.isLoggedIn ? appState.currentPage : 'landingPage';
-    showPage(initialPage, true);
-
-    // Start persistent timers
-    if (appState.isLoggedIn) {
-        if (appState.trade.active) startTradeCountdown();
-        if (appState.withdrawal.status === 'Processing') startWithdrawalCountdown();
-        checkWithdrawalSuspension();
-    }
-
-    // Load charts when logged in
-    if (appState.isLoggedIn &&
-        (initialPage === 'home' || initialPage === 'tradePage' || initialPage === 'earningsPage')) {
-
-        initializeTradingViewChart('tvchart', TRADINGVIEW_SYMBOL);
-        initializeTradingViewChart('tradeLiveChart', appState.trade.asset);
-        initializeTradingViewChart('earningsLiveChart', appState.trade.asset);
-    }
-
-    // Background tasks - UI refresh
-    setInterval(() => {
-        if (appState.isLoggedIn) {
-            renderHomeUI();
-        }
-    }, 5000);
-
-    // Periodic data refresh
-    setInterval(fetchMarketData, 60000);
-    setInterval(loadDailyMarketUpdates, 12 * 60 * 60 * 1000);
-
-    // First-time call for market news
-    loadDailyMarketUpdates();
-}
-
-// Load Market Data (Trending)
-loadTrendingCoins();
-
-// Load Chart
-loadTradingView();
-
-// Auto-run when UI loads
-document.addEventListener("DOMContentLoaded", () => {
-    if (appState.isLoggedIn) {
-        renderHomeUI();
-    } else {
-        loadTrendingCoins(); // load trending on login page
-    }
-
-    window.onload = initializeApp;
-});
+        window.onload = initializeApp;
 
     </script>
 </body>
