@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Professional auto-trading bot for cryptocurrency markets with live data, advanced analytics, and AI-powered trading strategies">
+  <meta name="theme-color" content="#070E20">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Auto-Trading Bot | Professional Cryptocurrency Trading Platform</title>
+  
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --exness-yellow: #FFDE02;
+      --exness-dark: #070E20;
+      --exness-slate: #6C8595;
+      --exness-dark-bg: #0A1628;
+      --exness-card-bg: #12213A;
+      --exness-border: #1E3557;
+      --text-primary: #FFFFFF;
+      --text-secondary: #A3B4C6;
+      --text-tertiary: #6C8595;
+      --success-green: #22C55E;
+      --danger-red: #EF4444;
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--exness-dark);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    .page.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background-color: rgba(7, 14, 32, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--exness-border);
+      padding: 1rem 1.5rem;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--exness-yellow) 0%, #FFC700 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--exness-dark);
+    }
+    
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 0.625rem 1.25rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+    
+    .btn-primary {
+      background: var(--exness-yellow);
+      color: var(--exness-dark);
+    }
+    
+    .btn-primary:hover {
+      background: #FFC700;
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--exness-border);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 222, 2, 0.1);
+      border-color: var(--exness-yellow);
+    }
+    
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    
+    .btn-ghost:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .more-options {
+      position: relative;
+    }
+    
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      right: 0;
+      background: var(--exness-card-bg);
+      border: 1px solid var(--exness-border);
+      border-radius: 8px;
+      padding: 0.5rem;
+      min-width: 200px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    .dropdown-menu.show {
+      display: block;
+      animation: dropdownSlide 0.2s ease-out;
+    }
+    
+    @keyframes dropdownSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .dropdown-item {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      color: var(--text-secondary);
+      border: none;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .dropdown-item:hover {
+      background: rgba(255, 222, 2, 0.1);
+      color: var(--text-primary);
+    }
+    
+    .hero {
+      padding: 4rem 1.5rem 3rem;
+      text-align: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #FFFFFF 0%, var(--exness-yellow) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero p {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      line-height: 1.7;
+    }
+    
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .hero-buttons .btn {
+      padding: 0.875rem 2rem;
+      font-size: 1rem;
+    }
+    
+    .section {
+      padding: 3rem 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .section-header {
+      margin-bottom: 2rem;
+    }
+    
+    .section-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .section-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+    
+    .market-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .coin-card {
+      background: var(--exness-card-bg);
+      border: 1px solid var(--exness-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .coin-card:hover {
+      border-color: var(--exness-yellow);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255, 222, 2, 0.15);
+    }
+    
+    .coin-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    
+    .coin-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+    }
+    
+    .coin-info h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .coin-info p {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+    
+    .coin-price {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .coin-change {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    
+    .coin-change.positive {
+      color: var(--success-green);
+    }
+    
+    .coin-change.negative {
+      color: var(--danger-red);
+    }
+    
+    .chart-container {
+      background: var(--exness-card-bg);
+      border: 1px solid var(--exness-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .chart-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    
+    #tradingview-chart {
+      width: 100%;
+      height: 500px;
+      min-height: 400px;
+    }
+    
+    .footer {
+      background: var(--exness-dark-bg);
+      border-top: 1px solid var(--exness-border);
+      padding: 3rem 1.5rem 2rem;
+      margin-top: 4rem;
+    }
+    
+    .footer-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .footer-section h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+    
+    .footer-links {
+      list-style: none;
+    }
+    
+    .footer-links li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: var(--exness-yellow);
+    }
+    
+    .footer-bottom {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding-top: 2rem;
+      border-top: 1px solid var(--exness-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-tertiary);
+    }
+    
+    .install-prompt {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--exness-card-bg);
+      border: 1px solid var(--exness-yellow);
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 400px;
+      width: calc(100% - 2rem);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      display: none;
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    .install-prompt.show {
+      display: block;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+    
+    .install-prompt h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .install-prompt p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .install-prompt-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+    
+    .install-prompt-buttons .btn {
+      flex: 1;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(7, 14, 32, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+    
+    .loading-overlay.show {
+      display: flex;
+    }
+    
+    .loading-content {
+      text-align: center;
+    }
+    
+    .spinner {
+      width: 64px;
+      height: 64px;
+      border: 4px solid var(--exness-border);
+      border-top-color: var(--exness-yellow);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .loading-subtext {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+    
+    .trading-dashboard {
+      padding: 2rem 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .dashboard-header {
+      margin-bottom: 2rem;
+    }
+    
+    .dashboard-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .dashboard-subtitle {
+      color: var(--text-secondary);
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: var(--exness-card-bg);
+      border: 1px solid var(--exness-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    
+    .stat-change {
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      font-family: var(--font-mono);
+    }
+    
+    .trading-controls {
+      background: var(--exness-card-bg);
+      border: 1px solid var(--exness-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .controls-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+    
+    .control-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .control-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    .control-input {
+      background: var(--exness-dark);
+      border: 1px solid var(--exness-border);
+      border-radius: 6px;
+      padding: 0.625rem 1rem;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+    }
+    
+    .control-input:focus {
+      outline: none;
+      border-color: var(--exness-yellow);
+    }
+    
+    .control-select {
+      background: var(--exness-dark);
+      border: 1px solid var(--exness-border);
+      border-radius: 6px;
+      padding: 0.625rem 1rem;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    
+    .control-select:focus {
+      outline: none;
+      border-color: var(--exness-yellow);
+    }
+    
+    .bot-status {
+      background: linear-gradient(135deg, rgba(255, 222, 2, 0.1) 0%, rgba(108, 133, 149, 0.1) 100%);
+      border: 1px solid var(--exness-yellow);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    
+    .bot-status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success-green);
+      display: inline-block;
+      margin-right: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .nav-buttons {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .btn {
+        font-size: 0.8125rem;
+        padding: 0.5rem 1rem;
+      }
+      
+      .market-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .footer-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Landing Page -->
+  <div id="landing-page" class="page active">
+    <header class="header">
+      <div class="header-content">
+        <a href="#" class="logo">
+          <div class="logo-icon">E</div>
+          <span>Auto-Trading Bot</span>
+        </a>
+        <nav class="nav-buttons">
+          <button class="btn btn-ghost" onclick="showConnectPortfolio()">Connect Portfolio</button>
+          <button class="btn btn-primary" onclick="startFreeTrial()" data-testid="button-start-trial">Start Free Trial</button>
+          <button class="btn btn-secondary" onclick="handleLogin()" data-testid="button-login">Login ID</button>
+          <div class="more-options">
+            <button class="btn btn-ghost" onclick="toggleMoreOptions()" data-testid="button-more-options">
+              More ▾
+            </button>
+            <div id="more-dropdown" class="dropdown-menu">
+              <button class="dropdown-item" onclick="showConnectPortfolio()">
+                📊 Connect Portfolio
+              </button>
+              <button class="dropdown-item" onclick="handleLogin()">
+                🔐 Login ID
+              </button>
+              <button class="dropdown-item" onclick="showSupport()">
+                💬 Support
+              </button>
+              <button class="dropdown-item" onclick="showConnectWallet()">
+                👛 Connect Wallet
+              </button>
+              <button class="dropdown-item" onclick="showInstallPrompt()">
+                📱 Get Mobile App
+              </button>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <h1>Take Control of Your Trading</h1>
+      <p>Trade CFDs with advanced AI-powered algorithms, real-time market data, and institutional-grade execution. Experience the future of automated trading.</p>
+      <div class="hero-buttons">
+        <button class="btn btn-primary" onclick="startFreeTrial()" data-testid="button-hero-trial">Start Free Trial</button>
+        <button class="btn btn-secondary" onclick="showInstallPrompt()" data-testid="button-get-app">Get Mobile App</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Market Overview</h2>
+        <p class="section-subtitle">Live cryptocurrency prices and 24-hour changes</p>
+      </div>
+      <div id="market-grid" class="market-grid">
+        <!-- Market data will be loaded here -->
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title" id="chart-coin-name">Bitcoin (BTC)</h3>
+          <select class="control-select" onchange="changeChartSymbol(this.value)" data-testid="select-chart-symbol">
+            <option value="BTCUSD">Bitcoin (BTC)</option>
+            <option value="ETHUSD">Ethereum (ETH)</option>
+            <option value="SOLUSD">Solana (SOL)</option>
+            <option value="BNBUSD">BNB (BNB)</option>
+            <option value="XRPUSD">Ripple (XRP)</option>
+          </select>
+        </div>
+        <div id="tradingview-chart"></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Product</h4>
+          <ul class="footer-links">
+            <li><a href="#" onclick="startFreeTrial(); return false;">Trading Platform</a></li>
+            <li><a href="#" onclick="startFreeTrial(); return false;">Auto-Trading Bot</a></li>
+            <li><a href="#">Market Analysis</a></li>
+            <li><a href="#">Pricing</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul class="footer-links">
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Press</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Resources</h4>
+          <ul class="footer-links">
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">API</a></li>
+            <li><a href="#">Community</a></li>
+            <li><a href="#" onclick="showSupport(); return false;">Support</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Legal</h4>
+          <ul class="footer-links">
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Risk Disclosure</a></li>
+            <li><a href="#">Licenses</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 Auto-Trading Bot. All rights reserved.</p>
+        <p>Trading involves risk. T&Cs apply.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- AI Trading Bot Page -->
+  <div id="trading-bot-page" class="page">
+    <header class="header">
+      <div class="header-content">
+        <a href="#" class="logo" onclick="showLandingPage(); return false;">
+          <div class="logo-icon">E</div>
+          <span>Auto-Trading Bot</span>
+        </a>
+        <nav class="nav-buttons">
+          <button class="btn btn-ghost" onclick="showLandingPage()">Back to Home</button>
+          <button class="btn btn-secondary">Settings</button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="trading-dashboard">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">AI Trading Dashboard</h1>
+        <p class="dashboard-subtitle">Monitor and control your automated trading strategies</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Portfolio Value</div>
+          <div class="stat-value">$125,847.32</div>
+          <div class="stat-change" style="color: var(--success-green);">+12.4% (24h)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Profit</div>
+          <div class="stat-value">$18,234.56</div>
+          <div class="stat-change" style="color: var(--success-green);">+8.9% (7d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Trades</div>
+          <div class="stat-value">12</div>
+          <div class="stat-change" style="color: var(--text-secondary);">3 pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Win Rate</div>
+          <div class="stat-value">78.5%</div>
+          <div class="stat-change" style="color: var(--success-green);">Above average</div>
+        </div>
+      </div>
+
+      <div class="trading-controls">
+        <h3 class="controls-title">Trading Bot Configuration</h3>
+        <div class="control-row">
+          <div class="control-group">
+            <label class="control-label">Trading Pair</label>
+            <select class="control-select" data-testid="select-trading-pair">
+              <option>BTC/USD</option>
+              <option>ETH/USD</option>
+              <option>SOL/USD</option>
+              <option>BNB/USD</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Strategy</label>
+            <select class="control-select" data-testid="select-strategy">
+              <option>Trend Following</option>
+              <option>Mean Reversion</option>
+              <option>Arbitrage</option>
+              <option>Market Making</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Risk Level</label>
+            <select class="control-select" data-testid="select-risk">
+              <option>Conservative</option>
+              <option selected>Moderate</option>
+              <option>Aggressive</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Max Position Size</label>
+            <input type="text" class="control-input" value="5,000 USD" data-testid="input-position-size">
+          </div>
+        </div>
+        <div class="bot-status">
+          <span class="bot-status-indicator"></span>
+          <strong>Bot Status: Active</strong> - Monitoring markets and executing trades
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title">Performance Chart</h3>
+        </div>
+        <div id="dashboard-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install Prompt -->
+  <div id="install-prompt" class="install-prompt">
+    <h3>Install App</h3>
+    <p>Install Auto-Trading Bot for the best trading experience with offline access and instant notifications!</p>
+    <div class="install-prompt-buttons">
+      <button class="btn btn-primary" onclick="installApp()" data-testid="button-install-now">Install Now</button>
+      <button class="btn btn-secondary" onclick="hideInstallPrompt()" data-testid="button-maybe-later">Maybe Later</button>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <div class="loading-text">Initializing Trading Bot...</div>
+      <div class="loading-subtext">Setting up your personalized dashboard</div>
+    </div>
+  </div>
+
+  <!-- TradingView Widget Script -->
+  <script src="https://s3.tradingview.com/tv.js"></script>
+
+  <script>
+    // PWA Installation
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('PWA install prompt available');
+    });
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service Worker registered:', reg))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+
+    function showInstallPrompt() {
+      document.getElementById('install-prompt').classList.add('show');
+    }
+
+    function hideInstallPrompt() {
+      document.getElementById('install-prompt').classList.remove('show');
+    }
+
+    async function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response: ${outcome}`);
+        if (outcome === 'accepted') {
+          console.log('App installed successfully');
+          alert('App installed successfully! Look for Auto-Trading Bot on your home screen.');
+        }
+        deferredPrompt = null;
+        hideInstallPrompt();
+      } else {
+        alert('To install:\n\niOS: Tap Share → Add to Home Screen\nAndroid: Tap Menu → Install App\nDesktop: Look for install icon in address bar');
+      }
+    }
+
+    // Navigation
+    function showLandingPage() {
+      document.getElementById('landing-page').classList.add('active');
+      document.getElementById('trading-bot-page').classList.remove('active');
+      window.scrollTo(0, 0);
+    }
+
+    function showTradingBotPage() {
+      document.getElementById('landing-page').classList.remove('active');
+      document.getElementById('trading-bot-page').classList.add('active');
+      window.scrollTo(0, 0);
+      initDashboardChart();
+    }
+
+    // Loading overlay functions
+    function showLoading() {
+      document.getElementById('loading-overlay').classList.add('show');
+    }
+
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.remove('show');
+    }
+
+    function startFreeTrial() {
+      showLoading();
+      setTimeout(() => {
+        hideLoading();
+        showTradingBotPage();
+      }, 15000);
+    }
+
+    function handleLogin() {
+      showLoading();
+      setTimeout(() => {
+        hideLoading();
+        showTradingBotPage();
+      }, 15000);
+    }
+
+    // Dropdown menu
+    function toggleMoreOptions() {
+      const dropdown = document.getElementById('more-dropdown');
+      dropdown.classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', (e) => {
+      if (!e.target.matches('.btn-ghost')) {
+        const dropdown = document.getElementById('more-dropdown');
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+        }
+      }
+    });
+
+    // Placeholder functions
+    function showConnectPortfolio() {
+      alert('Connect Portfolio: Link your exchange accounts to track your holdings and execute automated trades.');
+    }
+
+    function showSupport() {
+      alert('24/7 Support: Contact our team via live chat, email, or phone for assistance.');
+    }
+
+    function showConnectWallet() {
+      alert('Connect Wallet: Link your Web3 wallet for decentralized trading and asset management.');
+    }
+
+    // Market Data (CoinGecko API)
+    async function loadMarketData() {
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=1&sparkline=false&price_change_percentage=24h');
+        const data = await response.json();
+        
+        const grid = document.getElementById('market-grid');
+        grid.innerHTML = '';
+        
+        data.forEach(coin => {
+          const change = coin.price_change_percentage_24h || 0;
+          const changeClass = change >= 0 ? 'positive' : 'negative';
+          const changeSymbol = change >= 0 ? '+' : '';
+          
+          const card = document.createElement('div');
+          card.className = 'coin-card';
+          card.onclick = () => selectCoin(coin);
+          card.setAttribute('data-testid', `card-coin-${coin.id}`);
+          card.innerHTML = `
+            <div class="coin-header">
+              <img src="${coin.image}" alt="${coin.name}" class="coin-icon">
+              <div class="coin-info">
+                <h3>${coin.name}</h3>
+                <p>${coin.symbol.toUpperCase()}</p>
+              </div>
+            </div>
+            <div class="coin-price">$${coin.current_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div class="coin-change ${changeClass}">${changeSymbol}${change.toFixed(2)}%</div>
+          `;
+          grid.appendChild(card);
+        });
+      } catch (error) {
+        console.error('Error loading market data:', error);
+        document.getElementById('market-grid').innerHTML = '<p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1;">Unable to load market data. Please check your connection.</p>';
+      }
+    }
+
+    function selectCoin(coin) {
+      console.log('Selected coin:', coin.name);
+      const symbolMap = {
+        'bitcoin': 'BTCUSD',
+        'ethereum': 'ETHUSD',
+        'solana': 'SOLUSD',
+        'binancecoin': 'BNBUSD',
+        'ripple': 'XRPUSD',
+        'cardano': 'ADAUSD',
+        'dogecoin': 'DOGEUSD',
+        'polkadot': 'DOTUSD',
+        'polygon': 'MATICUSD',
+        'litecoin': 'LTCUSD',
+        'avalanche-2': 'AVAXUSD',
+        'chainlink': 'LINKUSD'
+      };
+      const symbol = symbolMap[coin.id] || 'BTCUSD';
+      changeChartSymbol(symbol, coin.name);
+    }
+
+    // TradingView Chart
+    let tradingViewWidget = null;
+    let dashboardWidget = null;
+
+    function initTradingViewChart() {
+      if (typeof TradingView === 'undefined') {
+        console.error('TradingView not loaded');
+        return;
+      }
+      
+      const container = document.getElementById('tradingview-chart');
+      if (!container) return;
+      
+      tradingViewWidget = new TradingView.widget({
+        autosize: true,
+        symbol: 'BINANCE:BTCUSDT',
+        interval: 'D',
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#070E20',
+        enable_publishing: false,
+        backgroundColor: '#12213A',
+        gridColor: '#1E3557',
+        hide_top_toolbar: false,
+        hide_legend: false,
+        save_image: false,
+        container_id: 'tradingview-chart',
+        studies: [
+          'MASimple@tv-basicstudies',
+          'RSI@tv-basicstudies'
+        ]
+      });
+    }
+
+    function changeChartSymbol(symbol, name) {
+      const symbolMap = {
+        'BTCUSD': 'BINANCE:BTCUSDT',
+        'ETHUSD': 'BINANCE:ETHUSDT',
+        'SOLUSD': 'BINANCE:SOLUSDT',
+        'BNBUSD': 'BINANCE:BNBUSDT',
+        'XRPUSD': 'BINANCE:XRPUSDT',
+        'ADAUSD': 'BINANCE:ADAUSDT',
+        'DOGEUSD': 'BINANCE:DOGEUSDT',
+        'DOTUSD': 'BINANCE:DOTUSDT',
+        'MATICUSD': 'BINANCE:MATICUSDT',
+        'LTCUSD': 'BINANCE:LTCUSDT',
+        'AVAXUSD': 'BINANCE:AVAXUSDT',
+        'LINKUSD': 'BINANCE:LINKUSDT'
+      };
+      
+      const tvSymbol = symbolMap[symbol] || 'BINANCE:BTCUSDT';
+      const coinName = name || symbol.replace('USD', '');
+      document.getElementById('chart-coin-name').textContent = coinName;
+      
+      // Reinitialize chart with new symbol
+      if (tradingViewWidget) {
+        const container = document.getElementById('tradingview-chart');
+        container.innerHTML = '';
+        tradingViewWidget = new TradingView.widget({
+          autosize: true,
+          symbol: tvSymbol,
+          interval: 'D',
+          timezone: 'Etc/UTC',
+          theme: 'dark',
+          style: '1',
+          locale: 'en',
+          toolbar_bg: '#070E20',
+          enable_publishing: false,
+          backgroundColor: '#12213A',
+          gridColor: '#1E3557',
+          hide_top_toolbar: false,
+          hide_legend: false,
+          save_image: false,
+          container_id: 'tradingview-chart'
+        });
+      }
+    }
+
+    function initDashboardChart() {
+      if (typeof TradingView === 'undefined') return;
+      
+      const container = document.getElementById('dashboard-chart');
+      if (!container) return;
+      
+      dashboardWidget = new TradingView.widget({
+        autosize: true,
+        symbol: 'BINANCE:BTCUSDT',
+        interval: '15',
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#070E20',
+        enable_publishing: false,
+        backgroundColor: '#12213A',
+        gridColor: '#1E3557',
+        hide_top_toolbar: false,
+        container_id: 'dashboard-chart',
+        studies: [
+          'MASimple@tv-basicstudies',
+          'RSI@tv-basicstudies',
+          'MACD@tv-basicstudies'
+        ]
+      });
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+      loadMarketData();
+      setTimeout(initTradingViewChart, 100);
+      
+      // Refresh market data every 30 seconds
+      setInterval(loadMarketData, 30000);
+    });
+  </script>
+</body>
+</html>
