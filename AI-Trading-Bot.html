@@ -472,6 +472,94 @@
   </section>
 
 
+  <!-- ===== TRENDING + CHART SCRIPT ===== -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const COINGECKO_API = "https://api.coingecko.com/api/v3";
+      const trendingContainer = document.getElementById("trendingCoins");
+
+      async function loadTrendingCoins() {
+        try {
+          const res = await fetch(`${COINGECKO_API}/search/trending`);
+          const data = await res.json();
+          trendingContainer.innerHTML = "";
+
+          data.coins.slice(0, 8).forEach((item) => {
+            const coin = item.item;
+
+            const card = document.createElement("div");
+            card.className = "coin-card";
+            card.innerHTML = `
+              <img src="${coin.large}" width="28" height="28" class="rounded-full">
+              <div>
+                <p class="text-sm font-semibold">${coin.name}</p>
+                <p class="text-xs text-gray-500 uppercase">${coin.symbol}</p>
+              </div>
+              <div class="ml-auto text-right">
+                <span class="text-xs font-semibold" id="price-${coin.id}">--</span>
+              </div>
+            `;
+
+            trendingContainer.appendChild(card);
+
+            fetch(`${COINGECKO_API}/simple/price?ids=${coin.id}&vs_currencies=usd&include_24hr_change=true`)
+              .then(r => r.json())
+              .then(priceData => {
+                const p = priceData[coin.id];
+                if (p) {
+                  const el = document.getElementById(`price-${coin.id}`);
+                  const change = p.usd_24h_change?.toFixed(2);
+                  el.innerHTML = `$${p.usd.toLocaleString()} <br>
+                    <span style="color:${change >= 0 ? '#16a34a' : '#dc2626'}">${change}%</span>`;
+                }
+              });
+          });
+
+        } catch (err) {
+          trendingContainer.innerHTML =
+            "<p class='text-sm text-gray-500'>Failed to load trending coins.</p>";
+        }
+      }
+
+      loadTrendingCoins();
+
+      // TradingView Chart
+      function initTradingView() {
+        if (typeof TradingView === "undefined") return;
+
+        const existing = document.querySelector("#tvchart iframe");
+        if (existing) existing.remove();
+
+        new TradingView.widget({
+          autosize: true,
+          symbol: "BINANCE:BTCUSDT",
+          interval: "15",
+          timezone: "Etc/UTC",
+          theme: "dark",
+          style: "1",
+          locale: "en",
+          toolbar_bg: "#111",
+          enable_publishing: false,
+          hide_top_toolbar: false,
+          container_id: "tvchart",
+        });
+      }
+
+      if (!window.tradingViewLoaded) {
+        const script = document.createElement("script");
+        script.src = "https://s3.tradingview.com/tv.js";
+        script.onload = () => {
+          window.tradingViewLoaded = true;
+          initTradingView();
+        };
+        document.body.appendChild(script);
+      } else {
+        initTradingView();
+      }
+    });
+  </script>
+
+
   <!-- ===== 5. RECENT ACTIVITIES ===== -->
   <section class="px-4 mt-6 mb-8">
     <h3 class="text-sm font-semibold text-gray-300 mb-2">Recent Activities</h3>
@@ -2290,135 +2378,36 @@ function showMarketErrorMessage(message) {
             renderHomeUI();
         }
 
-// =============================
-// 🔥 TRENDING COINS + CHART
-// =============================
-
-const COINGECKO_API = "https://api.coingecko.com/api/v3";
-
-async function loadTrendingCoins() {
-    const trendingContainer = document.getElementById("trendingCoins");
-    if (!trendingContainer) return;
-
-    try {
-        const res = await fetch(`${COINGECKO_API}/search/trending`);
-        const data = await res.json();
-        trendingContainer.innerHTML = "";
-
-        data.coins.slice(0, 8).forEach((item) => {
-            const coin = item.item;
-
-            const card = document.createElement("div");
-            card.className = "coin-card";
-            card.innerHTML = `
-                <img src="${coin.large}" width="28" height="28" class="rounded-full">
-                <div>
-                    <p class="text-sm font-semibold">${coin.name}</p>
-                    <p class="text-xs text-gray-500 uppercase">${coin.symbol}</p>
+  
+        // =======================================================
+        // 10. UI RENDERING & CHARTS
+        // =======================================================
+        
+        function renderHomeUI() {
+            if (!appState.isLoggedIn) return;
+            
+            const totalBalance = appState.balances.totalUSD;
+            document.getElementById('homeAccountID').textContent = appState.userId;
+            document.getElementById('totalBalanceDisplay').textContent = `$${totalBalance.toFixed(2).toLocaleString()}`;
+            
+            // Holdings
+            const holdingsList = document.getElementById('tokenHoldingsList');
+            const holdingsData = appState.balances.holdings.filter(h => h.usdValue > 0.01);
+            
+            document.getElementById('holdingsEmpty').classList.toggle('hidden', holdingsData.length > 0);
+            
+            holdingsList.innerHTML = holdingsData.map(h => `
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2 last:border-b-0">
+                    <div class="flex items-center gap-3">
+                        <img src="${h.image}" class="w-6 h-6 rounded-full" onerror="this.onerror=null;this.src='https://placehold.co/24x24/1f2937/ffffff?text=${h.symbol.substring(0,2)}'" />
+                        <div>
+                            <p class="font-semibold">${h.symbol.toUpperCase()}</p>
+                            <p class="text-xs text-binance-text-muted">${h.amount.toFixed(4)}</p>
+                        </div>
+                    </div>
+                    <p class="font-semibold">$${h.usdValue.toFixed(2).toLocaleString()}</p>
                 </div>
-                <div class="ml-auto text-right">
-                    <span class="text-xs font-semibold" id="price-${coin.id}">--</span>
-                </div>
-            `;
-
-            trendingContainer.appendChild(card);
-
-            // Load live price
-            fetch(`${COINGECKO_API}/simple/price?ids=${coin.id}&vs_currencies=usd&include_24hr_change=true`)
-                .then(r => r.json())
-                .then(priceData => {
-                    const p = priceData[coin.id];
-                    if (p) {
-                        const el = document.getElementById(`price-${coin.id}`);
-                        const change = p.usd_24h_change?.toFixed(2);
-                        el.innerHTML = `$${p.usd.toLocaleString()} <br>
-                          <span style="color:${change >= 0 ? '#16a34a' : '#dc2626'}">${change}%</span>`;
-                    }
-                });
-        });
-    } catch (err) {
-        trendingContainer.innerHTML =
-            "<p class='text-sm text-gray-500'>Failed to load trending coins.</p>";
-    }
-}
-
-
-// =============================
-// 📊 TRADINGVIEW CHART
-// =============================
-
-function initTradingView() {
-    if (typeof TradingView === "undefined") return;
-
-    const existing = document.querySelector("#tvchart iframe");
-    if (existing) existing.remove();
-
-    new TradingView.widget({
-        autosize: true,
-        symbol: "BINANCE:BTCUSDT",
-        interval: "15",
-        timezone: "Etc/UTC",
-        theme: "dark",
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#111",
-        enable_publishing: false,
-        hide_top_toolbar: false,
-        container_id: "tvchart",
-    });
-}
-
-function loadTradingView() {
-    if (!window.tradingViewLoaded) {
-        const script = document.createElement("script");
-        script.src = "https://s3.tradingview.com/tv.js";
-        script.onload = () => {
-            window.tradingViewLoaded = true;
-            initTradingView();
-        };
-        document.body.appendChild(script);
-    } else {
-        initTradingView();
-    }
-}
-
-
-
-// =======================================================
-// 11. HOME UI RENDERING (ORIGINAL 2ND SCRIPT)
-// =======================================================
-
-function renderHomeUI() {
-    if (!appState.isLoggedIn) return;
-
-    // Account
-    document.getElementById('homeAccountID').textContent = appState.userId;
-
-    // Total Balance
-    const totalBalance = appState.balances.totalUSD;
-    document.getElementById('totalBalanceDisplay').textContent =
-        `$${totalBalance.toFixed(2).toLocaleString()}`;
-
-    // Holdings
-    const holdingsList = document.getElementById('tokenHoldingsList');
-    const holdingsData = appState.balances.holdings.filter(h => h.usdValue > 0.01);
-
-    document.getElementById('holdingsEmpty')
-        .classList.toggle('hidden', holdingsData.length > 0);
-
-    holdingsList.innerHTML = holdingsData.map(h => `
-        <div class="flex items-center justify-between border-b border-gray-800 pb-2 last:border-b-0">
-            <div class="flex items-center gap-3">
-                <img src="${h.image}" class="w-6 h-6 rounded-full"
-                    onerror="this.onerror=null;this.src='https://placehold.co/24x24/1f2937/ffffff?text=${h.symbol.substring(0,2)}'" />
-                <div>
-                    <p class="font-semibold">${h.symbol.toUpperCase()}</p>
-                    <p class="text-xs text-binance-text-muted">${h.amount.toFixed(4)}</p>
-                </div>
-            </div>
-            <p class="font-semibold">$${h.usdValue.toFixed(2).toLocaleString()}</p>
-        </div>
-    `).join('');     
+            `).join('');
 
             // Activities Summary
             const latestActivity = appState.activities[0];
@@ -2887,7 +2876,8 @@ function renderTradeUI() {
         }
 
         
-            // =======================================================
+            
+                    // =======================================================
         // 14. INITIALIZATION AND EVENT HANDLERS
         // =======================================================
         
@@ -2975,15 +2965,9 @@ function renderTradeUI() {
             
             // Initial call for daily updates (will check timestamp)
             loadDailyMarketUpdates(); 
-        }    // Load Market Data (Trending)
-     loadTrendingCoins();
-
-    // Load Chart
-    loadTradingView();
-     }  
+        }
 
         window.onload = initializeApp;
-
     </script>
 </body>
 </html>
