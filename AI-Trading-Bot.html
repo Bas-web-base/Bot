@@ -2877,5 +2877,57 @@ function renderTradeUI() {
         window.onload = initializeApp;
 
     </script>
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+  const COINGECKO_API = "https://api.coingecko.com/api/v3";
+  const trendingContainer = document.getElementById("trendingCoins");
+
+  async function loadTrendingCoins() {
+    try {
+      const res = await fetch(`${COINGECKO_API}/search/trending`);
+      const data = await res.json();
+      trendingContainer.innerHTML = "";
+
+      data.coins.slice(0, 8).forEach((item) => {
+        const coin = item.item;
+
+        const card = document.createElement("div");
+        card.className = "coin-card";
+        card.innerHTML = `
+          <img src="${coin.large}" width="28" height="28" class="rounded-full">
+          <div>
+            <p class="text-sm font-semibold">${coin.name}</p>
+            <p class="text-xs text-gray-500 uppercase">${coin.symbol}</p>
+          </div>
+          <div class="ml-auto text-right">
+            <span class="text-xs font-semibold" id="price-${coin.id}">--</span>
+          </div>
+        `;
+
+        trendingContainer.appendChild(card);
+
+        fetch(`${COINGECKO_API}/simple/price?ids=${coin.id}&vs_currencies=usd&include_24hr_change=true`)
+          .then(r => r.json())
+          .then(priceData => {
+            const p = priceData[coin.id];
+            if (p) {
+              const el = document.getElementById(`price-${coin.id}`);
+              const change = p.usd_24h_change?.toFixed(2);
+              el.innerHTML = `$${p.usd.toLocaleString()} <br>
+                <span style="color:${change >= 0 ? '#16a34a' : '#dc2626'}">${change}%</span>`;
+            }
+          });
+      });
+
+    } catch (err) {
+      console.error("Error loading trending coins:", err);
+    }
+  }
+
+  // 🚀 Load coins on page start
+  loadTrendingCoins();
+
+});
+    </script>
 </body>
 </html>
