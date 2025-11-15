@@ -1430,51 +1430,43 @@
                 case 43114: return "Avalanche C-Chain";
                 default: return `Chain ID: ${chainId}`;
             }
-        }
+
         
-        // -------------------------------------------------------
-// Fetch Market Data from CoinGecko Public API
-// -------------------------------------------------------
-async function fetchMarketData() {
-    try {
-        // Fetch top 50 coins by market cap
-        const response = await fetch(
-            `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h`
-        );
-
-        if (!response.ok) throw new Error(`Failed to fetch market data. (${response.status})`);
-        const data = await response.json();
-        marketDataCache = data;
-
-        // Fetch global metrics
-        const globalResponse = await fetch(`${COINGECKO_API}/global`);
-        const globalData = await globalResponse.json();
-
-        // Render Landing Page Market Section
-        renderLandingPageMarket(globalData.data, data);
-
-        // If logged in, render user pages
-        if (appState?.isLoggedIn) {
-            renderHomeUI();
-            renderWalletMarketList(data);
-
-            // -----------------------------------
-            // 🔥 NEW: Load Trending Coins on Login
-            // -----------------------------------
-            if (typeof loadTrendingCoins === "function") {
-                loadTrendingCoins();
-            }
-        }
-
-        // Render Market Page list
-        renderMarkets('default');
-
-    } catch (error) {
-        console.error("Error fetching market data:", error);
-        showMarketErrorMessage("Unable to load market data. Please check your internet connection.");
+// -------------------------------------------------------    
+// Fetch Market Data from CoinGecko Public API    
+// -------------------------------------------------------    
+async function fetchMarketData() {    
+    try {    
+        // Fetch top 50 coins by market cap    
+        const response = await fetch(    
+            `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h`    
+        );    
+    
+        if (!response.ok) throw new Error(`Failed to fetch market data. (${response.status})`);    
+        const data = await response.json();    
+        marketDataCache = data;    
+    
+        // Fetch global data (market cap, volume, dominance, etc.)    
+        const globalResponse = await fetch(`${COINGECKO_API}/global`);    
+        const globalData = await globalResponse.json();    
+    
+        // Render Landing Page Market Section    
+        renderLandingPageMarket(globalData.data, data);    
+    
+        // If logged in, render user pages    
+        if (appState?.isLoggedIn) {    
+            renderHomeUI();    
+            renderWalletMarketList(data);    
+        }    
+    
+        // Render Market Page list if available    
+        renderMarkets('default');    
+    
+    } catch (error) {    
+        console.error("Error fetching market data:", error);    
+        showMarketErrorMessage("Unable to load market data. Please check your internet connection.");    
     }
-}
-
+    
 // -------------------------------------------------------
 // Render Landing Page Market Summary
 // -------------------------------------------------------
