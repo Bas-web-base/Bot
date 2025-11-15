@@ -2528,16 +2528,7 @@ function renderTradeUI() {
             "scalesProperties.textColor": "#E5E7EB"
         }
     });
-    console.log(`TradingView chart initialized for: ${tvSymbol}`);
-}
 
-function updateTradingViewChart(newSymbol) {
-    if (tvChartWidget && typeof tvChartWidget.setSymbol === 'function') {
-        tvChartWidget.setSymbol(newSymbol);
-        console.log(`TradingView chart updated to: ${newSymbol}`);
-    } else {
-        initTradingViewChart(newSymbol);
-    }
 }
 
         // =======================================================
