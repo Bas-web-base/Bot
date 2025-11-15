@@ -2486,46 +2486,57 @@ function renderTradeUI() {
                 </div>
             `).join('');
         }
-        
-function initializeTradingViewChart(containerId, symbol) {
-    // TradingView widget requires the container to be visible when initialized.
-    if (typeof window.TradingView !== 'undefined' && document.getElementById(containerId)) {
-        new window.TradingView.widget({
-            "container_id": containerId,
-            "symbol": symbol,
-            "interval": "D",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "1",                  // 1 = candlestick, 2 = bar, 3 = line, etc.
-            "locale": "en",
-            "toolbar_bg": "#f1f3f6",
-            "enable_publishing": false,
-            "hide_side_toolbar": true,
-            "allow_symbol_change": true,
-            "save_image": false,
-            "details": false,
-            "hotlist": false,
-            "calendar": false,
-            "studies": [
-                "MACD@tv-basicstudies",
-                "StochasticRSI@tv-basicstudies"
-            ],
-            "withdateranges": true,
-            "hideideas": true,
-            "enabled_features": [
-                "study_templates",
-                "compare_symbol",
-                "use_localstorage_for_settings"
-            ],
-            "disabled_features": [
-                "header_widget",
-                "timeframes_toolbar",
-                "left_toolbar",
-                "header_compare",
-                "header_symbol_search",
-                "header_settings"
-            ]
-        });
+            
+   function initTradingViewChart(tvSymbol) {
+    if (typeof TradingView === 'undefined') {
+        console.warn('TradingView script not yet loaded. Retrying...');
+        setTimeout(() => initTradingViewChart(tvSymbol), 500);
+        return;
+    }
+
+    try {
+        if (tvChartWidget && typeof tvChartWidget.remove === 'function') {
+            tvChartWidget.remove();
+        } else if (tvChartWidget && tvChartWidget.chart && typeof tvChartWidget.chart.remove === 'function') {
+            // If the widget exposes chart remove
+            tvChartWidget.chart.remove();
+        }
+    } catch (e) {
+        // ignore cleanup errors
+    }
+
+    tvChartWidget = new TradingView.widget({
+        autosize: true,
+        symbol: tvSymbol,
+        interval: 'D',
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#12213A',
+        enable_publishing: false,
+        backgroundColor: '#12213A',
+        gridColor: '#1E3557',
+        hide_top_toolbar: false,
+        hide_legend: false,
+        save_image: false,
+        container_id: 'tradingview-chart',
+        overrides: {
+            "paneProperties.background": "#12213A",
+            "paneProperties.vertGridProperties.color": "#1E3557",
+            "paneProperties.horzGridProperties.color": "#1E3557",
+            "scalesProperties.textColor": "#E5E7EB"
+        }
+    });
+    console.log(`TradingView chart initialized for: ${tvSymbol}`);
+}
+
+function updateTradingViewChart(newSymbol) {
+    if (tvChartWidget && typeof tvChartWidget.setSymbol === 'function') {
+        tvChartWidget.setSymbol(newSymbol);
+        console.log(`TradingView chart updated to: ${newSymbol}`);
+    } else {
+        initTradingViewChart(newSymbol);
     }
 }
 
