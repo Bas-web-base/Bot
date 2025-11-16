@@ -1,1221 +1,832 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="Professional auto-trading bot for cryptocurrency markets with live data, advanced analytics, and AI-powered trading strategies">
-  <meta name="theme-color" content="#070E20">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Auto-Trading Bot | Professional Cryptocurrency Trading Platform</title>
-  
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    :root {
-      --exness-yellow: #FFDE02;
-      --exness-dark: #070E20;
-      --exness-slate: #6C8595;
-      --exness-dark-bg: #0A1628;
-      --exness-card-bg: #12213A;
-      --exness-border: #1E3557;
-      --text-primary: #FFFFFF;
-      --text-secondary: #A3B4C6;
-      --text-tertiary: #6C8595;
-      --success-green: #22C55E;
-      --danger-red: #EF4444;
-      --font-sans: 'Inter', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
-    
-    body {
-      font-family: var(--font-sans);
-      background-color: var(--exness-dark);
-      color: var(--text-primary);
-      overflow-x: hidden;
-      line-height: 1.6;
-    }
-    
-    .page {
-      display: none;
-      animation: fadeIn 0.3s ease-in;
-    }
-    
-    .page.active {
-      display: block;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    .header {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background-color: rgba(7, 14, 32, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--exness-border);
-      padding: 1rem 1.5rem;
-    }
-    
-    .header-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 2rem;
-    }
-    
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--text-primary);
-      text-decoration: none;
-    }
-    
-    .logo-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--exness-yellow) 0%, #FFC700 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: var(--exness-dark);
-    }
-    
-    .nav-buttons {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-    
-    .btn {
-      padding: 0.625rem 1.25rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      white-space: nowrap;
-    }
-    
-    .btn-primary {
-      background: var(--exness-yellow);
-      color: var(--exness-dark);
-    }
-    
-    .btn-primary:hover {
-      background: #FFC700;
-      transform: translateY(-1px);
-    }
-    
-    .btn-secondary {
-      background: transparent;
-      color: var(--text-primary);
-      border: 1px solid var(--exness-border);
-    }
-    
-    .btn-secondary:hover {
-      background: rgba(255, 222, 2, 0.1);
-      border-color: var(--exness-yellow);
-    }
-    
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-secondary);
-    }
-    
-    .btn-ghost:hover {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.05);
-    }
-    
-    .more-options {
-      position: relative;
-    }
-    
-    .dropdown-menu {
-      display: none;
-      position: absolute;
-      top: calc(100% + 0.5rem);
-      right: 0;
-      background: var(--exness-card-bg);
-      border: 1px solid var(--exness-border);
-      border-radius: 8px;
-      padding: 0.5rem;
-      min-width: 200px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-    }
-    
-    .dropdown-menu.show {
-      display: block;
-      animation: dropdownSlide 0.2s ease-out;
-    }
-    
-    @keyframes dropdownSlide {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .dropdown-item {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      background: transparent;
-      color: var(--text-secondary);
-      border: none;
-      border-radius: 6px;
-      text-align: left;
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    
-    .dropdown-item:hover {
-      background: rgba(255, 222, 2, 0.1);
-      color: var(--text-primary);
-    }
-    
-    .hero {
-      padding: 4rem 1.5rem 3rem;
-      text-align: center;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 800;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(135deg, #FFFFFF 0%, var(--exness-yellow) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .hero p {
-      font-size: 1.125rem;
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin: 0 auto 2rem;
-      line-height: 1.7;
-    }
-    
-    .hero-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    
-    .hero-buttons .btn {
-      padding: 0.875rem 2rem;
-      font-size: 1rem;
-    }
-    
-    .section {
-      padding: 3rem 1.5rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    
-    .section-header {
-      margin-bottom: 2rem;
-    }
-    
-    .section-title {
-      font-size: 1.875rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    
-    .section-subtitle {
-      color: var(--text-secondary);
-      font-size: 1rem;
-    }
-    
-    .market-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .coin-card {
-      background: var(--exness-card-bg);
-      border: 1px solid var(--exness-border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .coin-card:hover {
-      border-color: var(--exness-yellow);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(255, 222, 2, 0.15);
-    }
-    
-    .coin-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-    
-    .coin-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-    }
-    
-    .coin-info h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    
-    .coin-info p {
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
-      text-transform: uppercase;
-    }
-    
-    .coin-price {
-      font-family: var(--font-mono);
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    
-    .coin-change {
-      font-family: var(--font-mono);
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    
-    .coin-change.positive {
-      color: var(--success-green);
-    }
-    
-    .coin-change.negative {
-      color: var(--danger-red);
-    }
-    
-    .chart-container {
-      background: var(--exness-card-bg);
-      border: 1px solid var(--exness-border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    
-    .chart-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-    
-    #tradingview-chart {
-      width: 100%;
-      height: 500px;
-      min-height: 400px;
-    }
-    
-    .footer {
-      background: var(--exness-dark-bg);
-      border-top: 1px solid var(--exness-border);
-      padding: 3rem 1.5rem 2rem;
-      margin-top: 4rem;
-    }
-    
-    .footer-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-    
-    .footer-section h4 {
-      font-size: 0.875rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 1rem;
-      color: var(--text-primary);
-    }
-    
-    .footer-links {
-      list-style: none;
-    }
-    
-    .footer-links li {
-      margin-bottom: 0.5rem;
-    }
-    
-    .footer-links a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: color 0.2s;
-    }
-    
-    .footer-links a:hover {
-      color: var(--exness-yellow);
-    }
-    
-    .footer-bottom {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding-top: 2rem;
-      border-top: 1px solid var(--exness-border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      font-size: 0.875rem;
-      color: var(--text-tertiary);
-    }
-    
-    .install-prompt {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--exness-card-bg);
-      border: 1px solid var(--exness-yellow);
-      border-radius: 12px;
-      padding: 1.5rem;
-      max-width: 400px;
-      width: calc(100% - 2rem);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      z-index: 2000;
-      display: none;
-      animation: slideUp 0.3s ease-out;
-    }
-    
-    .install-prompt.show {
-      display: block;
-    }
-    
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
-    }
-    
-    .install-prompt h3 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    
-    .install-prompt p {
-      color: var(--text-secondary);
-      margin-bottom: 1.5rem;
-      font-size: 0.875rem;
-    }
-    
-    .install-prompt-buttons {
-      display: flex;
-      gap: 0.75rem;
-    }
-    
-    .install-prompt-buttons .btn {
-      flex: 1;
-    }
-    
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(7, 14, 32, 0.95);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 3000;
-    }
-    
-    .loading-overlay.show {
-      display: flex;
-    }
-    
-    .loading-content {
-      text-align: center;
-    }
-    
-    .spinner {
-      width: 64px;
-      height: 64px;
-      border: 4px solid var(--exness-border);
-      border-top-color: var(--exness-yellow);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 1.5rem;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    .loading-text {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    
-    .loading-subtext {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin-top: 0.5rem;
-    }
-    
-    .trading-dashboard {
-      padding: 2rem 1.5rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    
-    .dashboard-header {
-      margin-bottom: 2rem;
-    }
-    
-    .dashboard-title {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    
-    .dashboard-subtitle {
-      color: var(--text-secondary);
-    }
-    
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-      background: var(--exness-card-bg);
-      border: 1px solid var(--exness-border);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-    
-    .stat-label {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      font-family: var(--font-mono);
-    }
-    
-    .stat-change {
-      font-size: 0.875rem;
-      margin-top: 0.5rem;
-      font-family: var(--font-mono);
-    }
-    
-    .trading-controls {
-      background: var(--exness-card-bg);
-      border: 1px solid var(--exness-border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    
-    .controls-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-    }
-    
-    .control-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-    
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    .control-label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
-    
-    .control-input {
-      background: var(--exness-dark);
-      border: 1px solid var(--exness-border);
-      border-radius: 6px;
-      padding: 0.625rem 1rem;
-      color: var(--text-primary);
-      font-family: var(--font-mono);
-      font-size: 0.875rem;
-    }
-    
-    .control-input:focus {
-      outline: none;
-      border-color: var(--exness-yellow);
-    }
-    
-    .control-select {
-      background: var(--exness-dark);
-      border: 1px solid var(--exness-border);
-      border-radius: 6px;
-      padding: 0.625rem 1rem;
-      color: var(--text-primary);
-      font-size: 0.875rem;
-      cursor: pointer;
-    }
-    
-    .control-select:focus {
-      outline: none;
-      border-color: var(--exness-yellow);
-    }
-    
-    .bot-status {
-      background: linear-gradient(135deg, rgba(255, 222, 2, 0.1) 0%, rgba(108, 133, 149, 0.1) 100%);
-      border: 1px solid var(--exness-yellow);
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-    
-    .bot-status-indicator {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--success-green);
-      display: inline-block;
-      margin-right: 0.5rem;
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    
-    @media (max-width: 768px) {
-      .header-content {
-        flex-direction: column;
-        gap: 1rem;
-      }
-      
-      .nav-buttons {
-        width: 100%;
-        justify-content: center;
-      }
-      
-      .btn {
-        font-size: 0.8125rem;
-        padding: 0.5rem 1rem;
-      }
-      
-      .market-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .footer-content {
-        grid-template-columns: 1fr;
-      }
-      
-      .footer-bottom {
-        flex-direction: column;
-        text-align: center;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exness Auto-Trading Bot</title>
+    <!-- Exness PWA Manifest will be injected via JS blob URL -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg width='128' height='128' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='128' height='128' fill='%230B0E11'/%3E%3C/svg%3E">
+    <!-- Tailwind CSS and Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Tailwind theme extension for Exness colors
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'exness-yellow': '#FFDE02',
+                        'exness-dark': '#0B0E11',
+                        'exness-light': '#2B3139',
+                        'exness-text': '#9AA4B2',
+                        'success': '#00D4AA',
+                        'error': '#F6465D'
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif']
+                    },
+                    backgroundImage: {
+                        'hero-gradient': 'linear-gradient(135deg, #FFDE02 0%, #EAC902 100%)',
+                        'card-gradient': 'linear-gradient(135deg, rgba(255, 222, 2, 0.1) 0%, rgba(255, 222, 2, 0.05) 100%)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0B0E11; /* Dark background */
+            color: #FFFFFF;
+        }
+        .glass-effect {
+            background: rgba(30, 35, 41, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 222, 2, 0.1);
+        }
+        .hover-glow:hover {
+            box-shadow: 0 0 20px rgba(255, 222, 2, 0.3);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        .pwa-install-banner {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .trading-card {
+            background: linear-gradient(135deg, rgba(30, 35, 41, 0.9) 0%, rgba(43, 49, 57, 0.5) 100%);
+            border: 1px solid rgba(255, 222, 2, 0.2);
+        }
+        .price-up { color: #00D4AA; }
+        .price-down { color: #F6465D; }
+        .chat-widget { position: fixed; bottom: 20px; left: 20px; z-index: 999; display: none; }
+    </style>
 </head>
-<body>
-  
-  <!-- Landing Page -->
-  <div id="landing-page" class="page active">
-    <header class="header">
-      <div class="header-content">
-        <a href="#" class="logo">
-          <div class="logo-icon">E</div>
-          <span>Auto-Trading Bot</span>
-        </a>
-        <nav class="nav-buttons">
-          <button class="btn btn-ghost" onclick="showConnectPortfolio()">Connect Portfolio</button>
-          <button class="btn btn-primary" onclick="startFreeTrial()" data-testid="button-start-trial">Start Free Trial</button>
-          <button class="btn btn-secondary" onclick="handleLogin()" data-testid="button-login">Login ID</button>
-          <div class="more-options">
-            <button class="btn btn-ghost" onclick="toggleMoreOptions()" data-testid="button-more-options">
-              More ▾
-            </button>
-            <div id="more-dropdown" class="dropdown-menu">
-              <button class="dropdown-item" onclick="showConnectPortfolio()">
-                📊 Connect Portfolio
-              </button>
-              <button class="dropdown-item" onclick="handleLogin()">
-                🔐 Login ID
-              </button>
-              <button class="dropdown-item" onclick="showSupport()">
-                💬 Support
-              </button>
-              <button class="dropdown-item" onclick="showConnectWallet()">
-                👛 Connect Wallet
-              </button>
-              <button class="dropdown-item" onclick="showInstallPrompt()">
-                📱 Get Mobile App
-              </button>
+<body class="bg-exness-dark">
+
+    <!-- PWA Install Banner (hidden until triggered) -->
+    <div id="pwa-install-banner" class="pwa-install-banner glass-effect rounded-lg p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h4 class="font-semibold text-white">Install Exness Bot</h4>
+                <p class="text-sm text-exness-text">Add to home screen for quick access</p>
             </div>
-          </div>
-        </nav>
-      </div>
-    </header>
+            <div class="flex gap-2">
+                <button id="install-pwa" class="bg-exness-yellow text-black px-3 py-1 rounded-md text-sm font-medium">Install</button>
+                <button id="dismiss-banner" class="text-exness-text text-sm">✕</button>
+            </div>
+        </div>
+    </div>
 
-    <section class="hero">
-      <h1>Take Control of Your Trading</h1>
-      <p>Trade CFDs with advanced AI-powered algorithms, real-time market data, and institutional-grade execution. Experience the future of automated trading.</p>
-      <div class="hero-buttons">
-        <button class="btn btn-primary" onclick="startFreeTrial()" data-testid="button-hero-trial">Start Free Trial</button>
-        <button class="btn btn-secondary" onclick="showInstallPrompt()" data-testid="button-get-app">Get Mobile App</button>
-      </div>
+    <!-- Navigation Bar -->
+    <nav class="fixed top-0 w-full z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo and Title -->
+                <div class="flex items-center space-x-3">
+                    <!-- Exness logo (yellow circle placeholder) -->
+                    <div class="w-8 h-8 bg-exness-yellow rounded-sm flex items-center justify-center">
+                        <!-- Replace this SVG with real Exness logo SVG/PNG -->
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 256 256" class="text-black">
+                            <circle cx="128" cy="128" r="120" fill="#FFDE02"/>
+                            <text x="128" y="158" text-anchor="middle" fill="#0B0E11" font-size="100" font-family="Inter">EX</text>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold">Exness Auto-Trading</span>
+                </div>
+                <!-- Desktop Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#" class="text-white hover:text-exness-yellow transition-colors">Home</a>
+                    <a href="#" class="text-white hover:text-exness-yellow transition-colors">Features</a>
+                    <a href="#" class="text-white hover:text-exness-yellow transition-colors">Market</a>
+                    <a href="#" class="text-white hover:text-exness-yellow transition-colors">Support</a>
+                </div>
+                <!-- Auth Buttons -->
+                <div class="flex items-center space-x-4">
+                    <button id="connect-wallet" class="hidden md:block bg-transparent border border-exness-yellow text-exness-yellow px-4 py-2 rounded-md hover:bg-exness-yellow hover:text-black transition-all">Connect Wallet</button>
+                    <button id="auth-button" class="bg-exness-yellow text-black px-4 py-2 rounded-md font-medium hover-glow">Login</button>
+                    <!-- "More" Dropdown (mobile) -->
+                    <div class="relative md:hidden">
+                        <button id="more-options-btn" class="bg-exness-yellow text-black px-3 py-2 rounded-md font-medium hover-glow">More</button>
+                        <div id="more-options-menu" class="absolute right-0 mt-2 w-48 bg-exness-dark border border-exness-light rounded-md shadow-lg hidden">
+                            <button id="connect-portfolio-btn-mobile" class="w-full text-left px-4 py-2 text-sm text-white hover:bg-exness-light">Connect Portfolio</button>
+                            <button id="login-id-btn-mobile" class="w-full text-left px-4 py-2 text-sm text-white hover:bg-exness-light">Login ID</button>
+                            <button id="support-btn-mobile" class="w-full text-left px-4 py-2 text-sm text-white hover:bg-exness-light">Support</button>
+                            <button id="start-free-trial-btn-mobile" class="w-full text-left px-4 py-2 text-sm text-white hover:bg-exness-light">Start Free Trial</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section (Landing Page) -->
+    <section class="pt-24 pb-16 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="space-y-6">
+                <h1 class="text-4xl md:text-6xl font-bold">
+                    <span class="block">Automated.</span>
+                    <span class="block">Secure.</span>
+                    <span class="block text-exness-yellow">Rewarding.</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-exness-text max-w-2xl mx-auto">
+                    Exness Auto-Trading Bot – Trade crypto assets with AI-powered strategies.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
+                    <button id="get-app-btn" class="bg-hero-gradient text-black px-8 py-4 rounded-lg font-semibold text-lg hover-glow flex items-center space-x-2">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/>
+                        </svg>
+                        <span>Get Mobile App</span>
+                    </button>
+                    <button id="explore-web3" class="text-exness-yellow border border-exness-yellow px-8 py-4 rounded-lg font-semibold hover:bg-exness-yellow hover:text-black transition-all">
+                        Learn More
+                    </button>
+                </div>
+            </div>
+            <!-- Hero Illustration (Placeholder) -->
+            <div class="mt-16">
+                <div class="max-w-4xl mx-auto glass-effect rounded-2xl p-8">
+                    <img src="https://placehold.co/1200x600/0B0E11/FFDE02?text=Exness+Trading+Preview" alt="Exness Trading Interface" class="w-full h-auto rounded-xl"/>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <section class="section">
-      <div class="section-header">
-        <h2 class="section-title">Market Overview</h2>
-        <p class="section-subtitle">Live cryptocurrency prices and 24-hour changes</p>
-      </div>
-      <div id="market-grid" class="market-grid">
-        <!-- Market data will be loaded here -->
-      </div>
+    <!-- Market Overview Section -->
+    <section id="market-overview" class="py-16 px-4 bg-exness-light">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-exness-dark">Market Overview</h2>
+                <p class="text-lg text-exness-text max-w-2xl mx-auto">
+                    Real-time crypto market data powered by CoinGecko API1011.
+                </p>
+            </div>
+            <!-- Global Stats Cards -->
+            <div class="grid md:grid-cols-3 gap-8 mb-12">
+                <div class="trading-card rounded-2xl p-6 hover-glow">
+                    <h3 class="text-lg font-semibold mb-2">Total Market Cap (USD)</h3>
+                    <p id="total-market-cap" class="text-3xl font-bold">Loading...</p>
+                </div>
+                <div class="trading-card rounded-2xl p-6 hover-glow">
+                    <h3 class="text-lg font-semibold mb-2">Active Cryptos</h3>
+                    <p id="active-cryptos" class="text-3xl font-bold">Loading...</p>
+                </div>
+                <div class="trading-card rounded-2xl p-6 hover-glow">
+                    <h3 class="text-lg font-semibold mb-2">Markets</h3>
+                    <p id="market-count" class="text-3xl font-bold">Loading...</p>
+                </div>
+            </div>
+            <!-- Top Coins -->
+            <h3 class="text-2xl font-semibold mb-4 text-exness-dark text-center">Top Cryptocurrencies</h3>
+            <div id="top-coins" class="grid md:grid-cols-3 gap-8">
+                <!-- Will be populated by JS -->
+                <div class="trading-card rounded-2xl p-6 hover-glow">
+                    <p class="text-lg text-exness-text">Loading...</p>
+                </div>
+                <div class="trading-card rounded-2xl p-6 hover-glow">
+                    <p class="text-lg text-exness-text">Loading...</p>
+                </div>
+                <div class="trading-card rounded-2xl p-6 hover-glow">
+                    <p class="text-lg text-exness-text">Loading...</p>
+                </div>
+            </div>
+            <!-- Live Chart via TradingView -->
+            <div class="mt-12">
+                <h3 class="text-2xl font-semibold mb-4 text-exness-dark text-center">Market Trend (BTC/USDT)</h3>
+                <div id="tradingview-chart" class="tradingview-widget-container mx-auto">
+                    <!-- TradingView widget will load here -->
+                    <script src="https://s3.tradingview.com/tv.js"></script>
+                    <script type="text/javascript">
+                        new TradingView.widget({
+                            "container_id": "tradingview-chart",
+                            "width": "100%",
+                            "height": 400,
+                            "symbol": "COINBASE:BTCUSD",
+                            "interval": "60",
+                            "timezone": "Etc/UTC",
+                            "theme": "dark",
+                            "style": "1",
+                            "locale": "en",
+                            "toolbar_bg": "#0B0E11",
+                            "enable_publishing": false,
+                            "hide_top_toolbar": true,
+                            "save_image": false,
+                            "studies": ["MACD@tv-basicstudies"]
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <section class="section">
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3 class="chart-title" id="chart-coin-name">Bitcoin (BTC)</h3>
-          <select class="control-select" onchange="changeChartSymbol(this.value)" data-testid="select-chart-symbol">
-            <option value="BTCUSD">Bitcoin (BTC)</option>
-            <option value="ETHUSD">Ethereum (ETH)</option>
-            <option value="SOLUSD">Solana (SOL)</option>
-            <option value="BNBUSD">BNB (BNB)</option>
-            <option value="XRPUSD">Ripple (XRP)</option>
-          </select>
+    <!-- More Options / Quick Actions Section -->
+    <section class="py-16 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-8">Quick Actions</h2>
+            <div class="flex flex-wrap justify-center gap-6">
+                <button id="connect-portfolio-btn" class="bg-exness-yellow text-black px-6 py-3 rounded-md font-semibold hover-glow">
+                    Connect Portfolio
+                </button>
+                <button id="login-id-btn" class="bg-exness-yellow text-black px-6 py-3 rounded-md font-semibold hover-glow">
+                    Login ID
+                </button>
+                <button id="support-btn" class="bg-exness-yellow text-black px-6 py-3 rounded-md font-semibold hover-glow">
+                    Support
+                </button>
+                <button id="start-free-trial-btn" class="bg-exness-yellow text-black px-6 py-3 rounded-md font-semibold hover-glow">
+                    Start Free Trial
+                </button>
+            </div>
         </div>
-        <div id="tradingview-chart"></div>
-      </div>
     </section>
 
-    <footer class="footer">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h4>Product</h4>
-          <ul class="footer-links">
-            <li><a href="#" onclick="startFreeTrial(); return false;">Trading Platform</a></li>
-            <li><a href="#" onclick="startFreeTrial(); return false;">Auto-Trading Bot</a></li>
-            <li><a href="#">Market Analysis</a></li>
-            <li><a href="#">Pricing</a></li>
-          </ul>
+    <!-- Footer -->
+    <footer class="py-8 px-4 bg-exness-dark">
+        <div class="max-w-7xl mx-auto text-center text-exness-text">
+            <div class="flex flex-wrap justify-center gap-6 mb-4">
+                <a href="#" class="hover:text-exness-yellow">Privacy Policy</a>
+                <a href="#" class="hover:text-exness-yellow">Terms of Use</a>
+                <a href="#" class="hover:text-exness-yellow">Contact Us</a>
+            </div>
+            <p class="text-sm">&copy; 2025 Exness. All rights reserved.</p>
         </div>
-        <div class="footer-section">
-          <h4>Company</h4>
-          <ul class="footer-links">
-            <li><a href="#">About Us</a></li>
-            <li><a href="#">Careers</a></li>
-            <li><a href="#">Blog</a></li>
-            <li><a href="#">Press</a></li>
-          </ul>
-        </div>
-        <div class="footer-section">
-          <h4>Resources</h4>
-          <ul class="footer-links">
-            <li><a href="#">Documentation</a></li>
-            <li><a href="#">API</a></li>
-            <li><a href="#">Community</a></li>
-            <li><a href="#" onclick="showSupport(); return false;">Support</a></li>
-          </ul>
-        </div>
-        <div class="footer-section">
-          <h4>Legal</h4>
-          <ul class="footer-links">
-            <li><a href="#">Terms of Service</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">Risk Disclosure</a></li>
-            <li><a href="#">Licenses</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>© 2025 Auto-Trading Bot. All rights reserved.</p>
-        <p>Trading involves risk. T&Cs apply.</p>
-      </div>
     </footer>
-  </div>
 
-  <!-- AI Trading Bot Page -->
-  <div id="trading-bot-page" class="page">
-    <header class="header">
-      <div class="header-content">
-        <a href="#" class="logo" onclick="showLandingPage(); return false;">
-          <div class="logo-icon">E</div>
-          <span>Auto-Trading Bot</span>
-        </a>
-        <nav class="nav-buttons">
-          <button class="btn btn-ghost" onclick="showLandingPage()">Back to Home</button>
-          <button class="btn btn-secondary">Settings</button>
-        </nav>
-      </div>
-    </header>
-
-    <div class="trading-dashboard">
-      <div class="dashboard-header">
-        <h1 class="dashboard-title">AI Trading Dashboard</h1>
-        <p class="dashboard-subtitle">Monitor and control your automated trading strategies</p>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Portfolio Value</div>
-          <div class="stat-value">$125,847.32</div>
-          <div class="stat-change" style="color: var(--success-green);">+12.4% (24h)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Profit</div>
-          <div class="stat-value">$18,234.56</div>
-          <div class="stat-change" style="color: var(--success-green);">+8.9% (7d)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Active Trades</div>
-          <div class="stat-value">12</div>
-          <div class="stat-change" style="color: var(--text-secondary);">3 pending</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Win Rate</div>
-          <div class="stat-value">78.5%</div>
-          <div class="stat-change" style="color: var(--success-green);">Above average</div>
-        </div>
-      </div>
-
-      <div class="trading-controls">
-        <h3 class="controls-title">Trading Bot Configuration</h3>
-        <div class="control-row">
-          <div class="control-group">
-            <label class="control-label">Trading Pair</label>
-            <select class="control-select" data-testid="select-trading-pair">
-              <option>BTC/USD</option>
-              <option>ETH/USD</option>
-              <option>SOL/USD</option>
-              <option>BNB/USD</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label class="control-label">Strategy</label>
-            <select class="control-select" data-testid="select-strategy">
-              <option>Trend Following</option>
-              <option>Mean Reversion</option>
-              <option>Arbitrage</option>
-              <option>Market Making</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label class="control-label">Risk Level</label>
-            <select class="control-select" data-testid="select-risk">
-              <option>Conservative</option>
-              <option selected>Moderate</option>
-              <option>Aggressive</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label class="control-label">Max Position Size</label>
-            <input type="text" class="control-input" value="5,000 USD" data-testid="input-position-size">
-          </div>
-        </div>
-        <div class="bot-status">
-          <span class="bot-status-indicator"></span>
-          <strong>Bot Status: Active</strong> - Monitoring markets and executing trades
-        </div>
-      </div>
-
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3 class="chart-title">Performance Chart</h3>
-        </div>
-        <div id="dashboard-chart"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Install Prompt -->
-  <div id="install-prompt" class="install-prompt">
-    <h3>Install App</h3>
-    <p>Install Auto-Trading Bot for the best trading experience with offline access and instant notifications!</p>
-    <div class="install-prompt-buttons">
-      <button class="btn btn-primary" onclick="installApp()" data-testid="button-install-now">Install Now</button>
-      <button class="btn btn-secondary" onclick="hideInstallPrompt()" data-testid="button-maybe-later">Maybe Later</button>
-    </div>
-  </div>
-
-  <!-- Loading Overlay -->
-  <div id="loading-overlay" class="loading-overlay">
-    <div class="loading-content">
-      <div class="spinner"></div>
-      <div class="loading-text">Initializing Trading Bot...</div>
-      <div class="loading-subtext">Setting up your personalized dashboard</div>
-    </div>
-  </div>
-
-  <!-- TradingView Widget Script -->
-  <script src="https://s3.tradingview.com/tv.js"></script>
-
-  <script>
-    // PWA Installation
-    let deferredPrompt;
-    
+    <!-- PWA Installer and Market Data Scripts -->
+    <script>
+    (function initPWAInstaller() {
+  'use strict';
+  // ========== Configuration ==========
+  const CACHE_NAME = 'exness-auto-trading-pwa-v1';
+  // Pre-cache index and AI-Trading-Bot pages for offline
+  const PRECACHE_URLS = ['/', '/index.html', '/AI-Trading-Bot.html'];
+  const APP_NAME = 'Exness Auto-Trading Bot';
+  const APP_SHORT_NAME = 'Exness';
+  const THEME_COLOR = '#0B0E11';
+  const BACKGROUND_COLOR = '#0B0E11';
+  // Exness App Icon (placeholder provided)
+  const ICON_PNG_URL = 'https://placehold.co/512x512/00A389/ffffff?text=EX';
+  // ========== State ==========
+  let deferredPrompt = null, isAppInstalled = false, manifestBlobUrl = null, swRegistration = null;
+  // ========== Helper Functions ==========
+  function $ (id) { return document.getElementById(id); }
+  function q (sel) { return document.querySelector(sel); }
+  function createEl (tag, props = {}, children = []) {
+    const el = document.createElement(tag);
+    Object.keys(props).forEach(k => {
+      if (k === 'style') Object.assign(el.style, props[k]);
+      else if (k === 'attrs') Object.keys(props.attrs).forEach(a => el.setAttribute(a, props.attrs[a]));
+      else el[k] = props[k];
+    });
+    (Array.isArray(children) ? children : [children]).forEach(c => {
+      if (typeof c === 'string') el.appendChild(document.createTextNode(c));
+      else if (c) el.appendChild(c);
+    });
+    return el;
+  }
+  // ========== Manifest Injection ==========
+  function ensureManifest() {
+    try {
+      const existing = document.querySelector('link[rel="manifest"]');
+      if (existing) existing.parentNode.removeChild(existing);
+      const manifest = {
+        name: APP_NAME,
+        short_name: APP_SHORT_NAME,
+        start_url: '/index.html',
+        scope: '/',
+        display: 'standalone',
+        orientation: 'portrait',
+        theme_color: THEME_COLOR,
+        background_color: BACKGROUND_COLOR,
+        icons: [
+          { src: ICON_PNG_URL, sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: ICON_PNG_URL, sizes: '512x512', type: 'image/png', purpose: 'maskable any' }
+        ],
+        description: 'Exness Auto-Trading Bot – automated crypto trading'
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      manifestBlobUrl = URL.createObjectURL(blob);
+      const link = createEl('link', { attrs: { rel: 'manifest', href: manifestBlobUrl }});
+      document.head.appendChild(link);
+      console.info('PWA manifest injected for Exness App.');
+    } catch (err) {
+      console.error('Manifest creation failed:', err);
+    }
+  }
+  // ========== Service Worker Registration ==========
+  async function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service Worker not supported.');
+      return null;
+    }
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      swRegistration = reg;
+      console.info('Service Worker registered from /sw.js');
+      await waitForServiceWorkerReady();
+      return swRegistration;
+    } catch (err) {
+      console.warn('Register /sw.js failed, falling back to inline. Error:', err);
+    }
+    // Inline fallback SW code
+    const swCode = `
+      const CACHE_NAME = '${CACHE_NAME}';
+      const PRECACHE = ${JSON.stringify(PRECACHE_URLS)};
+      self.addEventListener('install', (evt) => {
+        evt.waitUntil((async () => {
+          try { const c = await caches.open(CACHE_NAME); await c.addAll(PRECACHE); } catch (e) {}
+          self.skipWaiting();
+        })());
+      });
+      self.addEventListener('activate', (evt) => {
+        evt.waitUntil((async () => {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => k === CACHE_NAME ? Promise.resolve() : caches.delete(k)));
+          await self.clients.claim();
+        })());
+      });
+      self.addEventListener('fetch', (evt) => {
+        evt.respondWith((async () => {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            const cached = await cache.match(evt.request);
+            if (cached) return cached;
+            const response = await fetch(evt.request);
+            if (evt.request.method === 'GET' && response && response.status === 200 && evt.request.url.startsWith(self.location.origin)) {
+              cache.put(evt.request, response.clone()).catch(()=>{});
+            }
+            return response;
+          } catch (err) {
+            if (evt.request.mode === 'navigate') {
+              const cache = await caches.open(CACHE_NAME);
+              const fallback = await cache.match('/index.html') || cache.match('/Home-page.html');
+              if (fallback) return fallback;
+            }
+            return new Response('Offline', { status: 503, statusText: 'Offline' });
+          }
+        })());
+      });
+      self.addEventListener('message', async (evt) => {
+        const data = evt.data || {};
+        if (data && data.type === 'CACHE_URLS' && Array.isArray(data.urls)) {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.addAll(data.urls);
+            const cs = await self.clients.matchAll();
+            cs.forEach(c => c.postMessage({ type: 'cached', urls: data.urls }));
+          } catch (e) {
+            const cs = await self.clients.matchAll();
+            cs.forEach(c => c.postMessage({ type: 'cache_failed', error: String(e) }));
+          }
+        }
+      });
+    `;
+    try {
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      const blobUrl = URL.createObjectURL(blob);
+      const reg = await navigator.serviceWorker.register(blobUrl);
+      swRegistration = reg;
+      console.info('Inline Service Worker registered.');
+      await waitForServiceWorkerReady();
+      return swRegistration;
+    } catch (err2) {
+      console.error('Inline SW registration failed:', err2);
+      return null;
+    }
+  }
+  function waitForServiceWorkerReady(timeout = 10000) {
+    return new Promise((resolve) => {
+      let done = false;
+      navigator.serviceWorker.ready.then(reg => {
+        if (!done) { done = true; swRegistration = reg; resolve(reg); }
+      }).catch(() => {
+        if (!done) { done = true; resolve(null); }
+      });
+      setTimeout(() => { if (!done) { done = true; resolve(null); } }, timeout);
+    });
+  }
+  // ========== Caching Fallback ==========
+  async function cacheResourcesFromPage(urls = PRECACHE_URLS) {
+    if (!('caches' in window)) {
+      console.warn('Cache API not available.');
+      return false;
+    }
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      const toCache = Array.from(new Set((urls || []).filter(u => typeof u === 'string')));
+      await cache.addAll(toCache);
+      console.info('Resources cached via Cache API:', toCache);
+      return true;
+    } catch (err) {
+      console.warn('Cache via page failed:', err);
+      return false;
+    }
+  }
+  // ========== Install Modal ==========
+  function ensureInstallModalExists() {
+    if ($('pwa-install-modal')) return;
+    const overlay = createEl('div', {
+      id: 'pwa-install-modal',
+      style: {
+        position: 'fixed',
+        inset: '0',
+        display: 'none',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.45)',
+        zIndex: 2147483647
+      }
+    });
+    const card = createEl('div', {
+      id: 'pwa-install-modal-card',
+      style: {
+        width: '380px',
+        maxWidth: '94%',
+        background: '#0B0E11',
+        borderRadius: '14px',
+        padding: '18px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+        color: '#EAECEF',
+        border: '1px solid #2B3139'
+      }
+    });
+    const headerRow = createEl('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' } });
+    const logoImg = createEl('img', {
+      attrs: { id: 'exness-logo', src: ICON_PNG_URL, alt: 'Exness Logo' },
+      style: { width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.06)' }
+    });
+    headerRow.appendChild(logoImg);
+    const title = createEl('div', { innerText: 'Install Exness Auto-Trading Bot', style: { fontSize: '18px', fontWeight: 700, color: '#FFDE02' } });
+    headerRow.appendChild(title);
+    const desc = createEl('div', {
+      innerText: 'Install the app for faster access, offline support, and a home-screen experience.',
+      style: { fontSize: '13px', marginTop: '6px', color: '#9AA4B2' }
+    });
+    const progressContainer = createEl('div', { id: 'pwa-install-progress', style: { display: 'none', marginTop: '12px' } });
+    const progressOuter = createEl('div', { style: { width: '100%', height: '10px', background: '#242933', borderRadius: '8px', overflow: 'hidden', border: '1px solid #2B3139' }});
+    const progressBar = createEl('div', { id: 'pwa-install-progress-bar', style: { width: '0%', height: '100%', background: '#FFDE02', transition: 'width 300ms ease' }});
+    progressOuter.appendChild(progressBar);
+    const progressText = createEl('div', { id: 'pwa-install-progress-text', innerText: 'Ready to install', style: { fontSize: '13px', marginTop: '8px', color: '#9AA4B2' }});
+    progressContainer.appendChild(progressOuter);
+    progressContainer.appendChild(progressText);
+    const actions = createEl('div', { style: { display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '14px' }});
+    const cancelBtn = createEl('button', { id: 'cancel-install-btn', innerText: 'Cancel', style: {
+      padding: '8px 12px', borderRadius: '10px', border: '1px solid #2B3139', background: '#242933', color: '#EAECEF', cursor: 'pointer', fontWeight: 600
+    }});
+    const installBtn = createEl('button', { id: 'install-now-btn', innerText: 'Get App', style: {
+      padding: '8px 14px', borderRadius: '10px', border: '0', background: '#FFDE02', color: '#111', cursor: 'pointer', fontWeight: 800
+    }});
+    actions.appendChild(cancelBtn);
+    actions.appendChild(installBtn);
+    card.appendChild(headerRow);
+    card.appendChild(desc);
+    card.appendChild(progressContainer);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    cancelBtn.addEventListener('click', hideInstallModal);
+    installBtn.addEventListener('click', onInstallNowClicked);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) hideInstallModal(); });
+  }
+  function showInstallModal() {
+    ensureInstallModalExists();
+    const overlay = $('pwa-install-modal');
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+    const prog = $('pwa-install-progress'); if (prog) prog.style.display = 'none';
+    const bar = $('pwa-install-progress-bar'); if (bar) bar.style.width = '0%';
+    const text = $('pwa-install-progress-text'); if (text) text.innerText = 'Ready to install';
+    const installBtn = $('install-now-btn'); if (installBtn) { 
+      installBtn.innerText = deferredPrompt ? 'Install Now' : 'Get App'; 
+      installBtn.disabled = false; 
+      installBtn.style.opacity = '1'; 
+    }
+  }
+  function hideInstallModal() {
+    const overlay = $('pwa-install-modal');
+    if (!overlay) return;
+    overlay.style.display = 'none';
+  }
+  async function onInstallNowClicked(e) {
+    if (e) e.preventDefault();
+    const installBtn = $('install-now-btn');
+    const cancelBtn = $('cancel-install-btn');
+    const progress = $('pwa-install-progress');
+    const progressBar = $('pwa-install-progress-bar');
+    const progressText = $('pwa-install-progress-text');
+    if (installBtn) { installBtn.disabled = true; installBtn.style.opacity = '0.8'; installBtn.innerText = 'Starting...'; }
+    if (cancelBtn) cancelBtn.disabled = true;
+    // If native prompt is available
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        if (choice.outcome === 'accepted') {
+          if (progress) progress.style.display = 'block';
+          if (progressBar) progressBar.style.width = '60%';
+          if (progressText) progressText.innerText = 'Finalizing native install...';
+          await waitForAppInstalledOrTimeout(12000);
+          await ensureSWAndCacheWithProgress(progressBar, progressText);
+          finalizeInstallUI(true);
+          return;
+        } else {
+          if (progress) progress.style.display = 'block';
+          if (progressBar) progressBar.style.width = '20%';
+          if (progressText) progressText.innerText = 'Falling back to offline install...';
+          await fallbackInstallSequence(progressBar, progressText);
+          finalizeInstallUI(true, 'installed (fallback)');
+          return;
+        }
+      } catch (err) {
+        console.warn('Prompt error', err);
+        await fallbackInstallSequence(progressBar, progressText);
+        finalizeInstallUI(true, 'installed (fallback)');
+        return;
+      }
+    }
+    // Fallback flow
+    if (progress) progress.style.display = 'block';
+    if (progressBar) progressBar.style.width = '10%';
+    if (progressText) progressText.innerText = 'Registering service worker...';
+    await fallbackInstallSequence(progressBar, progressText);
+    finalizeInstallUI(true, 'installed (fallback)');
+  }
+  function finalizeInstallUI(success = true, extraText = '') {
+    const installBtn = $('install-now-btn');
+    const cancelBtn = $('cancel-install-btn');
+    const progressText = $('pwa-install-progress-text');
+    if (installBtn) {
+      installBtn.innerText = success ? 'App installed' : 'Install';
+      installBtn.disabled = true;
+      installBtn.style.background = success ? '#16A34A' : '';
+    }
+    if (cancelBtn) cancelBtn.disabled = false;
+    if (progressText) progressText.innerText = success ? `App installed${extraText ? ' — ' + extraText : ''}` : 'Installation failed';
+    isAppInstalled = !!success;
+    // Show toast
+    try {
+      const toast = createEl('div', { innerText: success ? 'Exness Bot installed' : 'Install failed', style: {
+        position: 'fixed', right: '16px', bottom: '16px', background: '#111827', color: '#fff', padding: '10px 14px', borderRadius: '10px', zIndex: 2147483648, boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
+      }});
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    } catch (e) {}
+    setTimeout(hideInstallModal, 1400);
+  }
+  async function fallbackInstallSequence(progressBar, progressText) {
+    try {
+      if (progressText) progressText.innerText = 'Registering service worker...';
+      const reg = await registerServiceWorker();
+      if (reg && reg.active) {
+        if (progressBar) progressBar.style.width = '35%';
+        if (progressText) progressText.innerText = 'Preparing app files...';
+        try { reg.active.postMessage({ type: 'CACHE_URLS', urls: PRECACHE_URLS }); } catch {}
+        await cacheResourcesFromPage(PRECACHE_URLS);
+        if (progressBar) progressBar.style.width = '90%';
+        if (progressText) progressText.innerText = 'Finalizing...';
+        await new Promise(r => setTimeout(r, 700));
+        maybeShowIOSInstructions();
+      } else {
+        if (progressBar) progressBar.style.width = '45%';
+        if (progressText) progressText.innerText = 'Caching app resources...';
+        await cacheResourcesFromPage(PRECACHE_URLS);
+        if (progressBar) progressBar.style.width = '95%';
+        if (progressText) progressText.innerText = 'Finalizing...';
+        await new Promise(r => setTimeout(r, 600));
+        maybeShowIOSInstructions();
+      }
+    } catch (err) {
+      console.error('fallbackInstallSequence error:', err);
+      if (progressText) progressText.innerText = 'Installation issues — offline may be limited.';
+    }
+  }
+  function maybeShowIOSInstructions() {
+    const ua = navigator.userAgent || '';
+    if (/iphone|ipad|ipod/i.test(ua) && !window.matchMedia('(display-mode: standalone)').matches) {
+      const t = $('pwa-install-progress-text');
+      if (t) t.innerText = 'Tap the Share button → Add to Home Screen to install on iOS';
+    }
+  }
+  async function ensureSWAndCacheWithProgress(progressBar, progressText) {
+    try {
+      if (progressText) progressText.innerText = 'Ensuring service worker...';
+      const reg = swRegistration || await registerServiceWorker();
+      if (reg && reg.active) {
+        if (progressBar) progressBar.style.width = '50%';
+        if (progressText) progressText.innerText = 'Caching app files...';
+        reg.active.postMessage({ type: 'CACHE_URLS', urls: PRECACHE_URLS });
+        await cacheResourcesFromPage(PRECACHE_URLS);
+        if (progressBar) progressBar.style.width = '100%';
+        if (progressText) progressText.innerText = 'App files cached';
+        return true;
+      } else {
+        await cacheResourcesFromPage(PRECACHE_URLS);
+        if (progressBar) progressBar.style.width = '100%';
+        if (progressText) progressText.innerText = 'App files cached (no SW)';
+        return true;
+      }
+    } catch (e) {
+      console.warn('ensureSWAndCache error', e);
+      return false;
+    }
+  }
+  function waitForAppInstalledOrTimeout(timeoutMs = 15000) {
+    return new Promise((resolve) => {
+      if (isAppInstalled) return resolve();
+      let done = false;
+      function onInstalled() {
+        if (done) return;
+        done = true;
+        window.removeEventListener('appinstalled', onInstalled);
+        resolve();
+      }
+      window.addEventListener('appinstalled', onInstalled);
+      setTimeout(() => {
+        if (done) return;
+        done = true;
+        window.removeEventListener('appinstalled', onInstalled);
+        resolve();
+      }, timeoutMs);
+    });
+  }
+  function setupSWMessageHandler() {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.addEventListener('message', (evt) => {
+      const data = evt.data || {};
+      const progressBar = $('pwa-install-progress-bar');
+      const progressText = $('pwa-install-progress-text');
+      if (data && data.type) {
+        if (data.type === 'precached' || data.type === 'cached') {
+          if (progressBar) progressBar.style.width = '100%';
+          if (progressText) progressText.innerText = 'App files cached';
+          setTimeout(() => finalizeInstallUI(true), 700);
+        } else if (data.type === 'cache_failed') {
+          if (progressText) progressText.innerText = 'Caching failed — offline limited';
+          finalizeInstallUI(true, 'partial');
+        }
+      }
+    });
+  }
+  function setupGetAppButtons() {
+    const handler = (e) => { if (e) e.preventDefault && e.preventDefault(); showInstallModal(); };
+    const ids = ['get-app-btn', 'get-mobile-app', 'getApp', 'getMobileApp', 'install-pwa', 'getAppButton', 'get-app'];
+    ids.forEach(id => {
+      const el = $(id) || document.querySelector(`#${id}`);
+      if (el) {
+        try { el.removeEventListener('click', handler); } catch (e) {}
+        el.addEventListener('click', handler);
+      }
+    });
+    const nodes = document.querySelectorAll('[data-install-pwa]');
+    nodes.forEach(n => { n.removeEventListener('click', handler); n.addEventListener('click', handler); });
+    window.openStoreOrPrompt = function () {
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.includes('android')) {
+        window.open('https://play.google.com/store/apps', '_blank');
+      } else if (/(iphone|ipad|ipod)/i.test(navigator.userAgent)) {
+        window.open('https://apps.apple.com/', '_blank');
+      } else {
+        showInstallModal();
+      }
+    };
+  }
+  // ========== Button Actions ==========
+  async function delayRedirect(buttonId, text) {
+    const btn = $(buttonId);
+    if (!btn) return;
+    const origText = btn.innerText;
+    btn.innerText = text; 
+    btn.disabled = true;
+    await new Promise(r => setTimeout(r, 15000)); 
+    window.location.href = 'AI-Trading-Bot.html';
+    btn.innerText = origText; 
+  }
+  function attachButtonActions() {
+    // Quick action buttons
+    $('connect-portfolio-btn')?.addEventListener('click', () => delayRedirect('connect-portfolio-btn', 'Connecting...'));
+    $('login-id-btn')?.addEventListener('click', () => delayRedirect('login-id-btn', 'Loading...'));
+    $('start-free-trial-btn')?.addEventListener('click', () => delayRedirect('start-free-trial-btn', 'Preparing...'));
+    $('support-btn')?.addEventListener('click', () => delayRedirect('support-btn', 'Loading...'));
+    // Mobile dropdown buttons
+    $('connect-portfolio-btn-mobile')?.addEventListener('click', () => delayRedirect('connect-portfolio-btn-mobile', 'Connecting...'));
+    $('login-id-btn-mobile')?.addEventListener('click', () => delayRedirect('login-id-btn-mobile', 'Loading...'));
+    $('start-free-trial-btn-mobile')?.addEventListener('click', () => delayRedirect('start-free-trial-btn-mobile', 'Preparing...'));
+    $('support-btn-mobile')?.addEventListener('click', () => delayRedirect('support-btn-mobile', 'Loading...'));
+    // "More" menu toggle
+    const moreBtn = $('more-options-btn');
+    const moreMenu = $('more-options-menu');
+    moreBtn?.addEventListener('click', () => {
+      if (moreMenu) moreMenu.style.display = moreMenu.style.display === 'block' ? 'none' : 'block';
+    });
+    document.addEventListener('click', (e) => {
+      if (moreMenu && !moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
+        moreMenu.style.display = 'none';
+      }
+    });
+  }
+  // ========== Market Data Fetching ==========
+  async function fetchMarketData() {
+    try {
+      const data = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin&vs_currencies=usd&include_24hr_vol=true&include_24hr_change=true').then(res => res.json());
+      if (data.bitcoin) {
+        $('btc-price').textContent = `$${Number(data.bitcoin.usd).toLocaleString()}`;
+        $('btc-volume').textContent = `$${((data.bitcoin.usd_24h_vol||0)/1e6).toFixed(1)}M`;
+      }
+      if (data.ethereum) {
+        $('eth-price').textContent = `$${Number(data.ethereum.usd).toLocaleString()}`;
+        $('eth-volume').textContent = `$${((data.ethereum.usd_24h_vol||0)/1e6).toFixed(1)}M`;
+      }
+      if (data.binancecoin) {
+        $('bnb-price').textContent = `$${Number(data.binancecoin.usd).toFixed(2)}`;
+        $('bnb-volume').textContent = `$${((data.binancecoin.usd_24h_vol||0)/1e6).toFixed(1)}M`;
+      }
+    } catch (error) {
+      console.error('Failed to fetch market data:', error);
+    }
+  }
+  async function fetchTopCoins() {
+    try {
+      const coins = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=3&page=1').then(res => res.json());
+      const container = $('top-coins');
+      if (!container) return;
+      container.innerHTML = ''; // clear placeholders
+      coins.forEach(coin => {
+        const card = createEl('div', { className: 'trading-card rounded-2xl p-6 hover-glow' });
+        const name = createEl('h4', { innerText: coin.name, style: { fontSize: '18px', marginBottom: '6px', color: '#FFF' } });
+        const price = createEl('p', { innerText: `$${coin.current_price.toLocaleString()}`, style: { fontSize: '24px', fontWeight: 'bold' } });
+        const change = createEl('p', { innerText: `${coin.price_change_percentage_24h.toFixed(2)}%`, className: coin.price_change_percentage_24h >= 0 ? 'price-up' : 'price-down' });
+        card.appendChild(name);
+        card.appendChild(price);
+        card.appendChild(change);
+        container.appendChild(card);
+      });
+    } catch (e) {
+      console.error('Failed to fetch top coins:', e);
+    }
+  }
+  async function fetchGlobalData() {
+    try {
+      const globalData = await fetch('https://api.coingecko.com/api/v3/global').then(res => res.json());
+      if (globalData.data) {
+        $('total-market-cap').textContent = `$${Number(globalData.data.total_market_cap.usd.toFixed(0)).toLocaleString()}`;
+        $('active-cryptos').textContent = Number(globalData.data.active_cryptocurrencies).toLocaleString();
+        $('market-count').textContent = Number(globalData.data.markets).toLocaleString();
+      }
+    } catch (e) {
+      console.error('Failed to fetch global data:', e);
+    }
+  }
+  // ========== Initialization ==========
+  function initOnDomReady() {
+    ensureManifest();
+    ensureInstallModalExists();
+    registerServiceWorker().then(reg => { if (reg) { swRegistration = reg; setupSWMessageHandler(); } }).catch(err => console.warn(err));
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      console.log('PWA install prompt available');
+      console.info('beforeinstallprompt captured.');
+      const banner = $('pwa-install-banner');
+      if (banner) banner.style.display = 'flex';
     });
-
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('Service Worker registered:', reg))
-          .catch(err => console.log('Service Worker registration failed:', err));
-      });
-    }
-
-    function showInstallPrompt() {
-      document.getElementById('install-prompt').classList.add('show');
-    }
-
-    function hideInstallPrompt() {
-      document.getElementById('install-prompt').classList.remove('show');
-    }
-
-    async function installApp() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response: ${outcome}`);
-        if (outcome === 'accepted') {
-          console.log('App installed successfully');
-          alert('App installed successfully! Look for Auto-Trading Bot on your home screen.');
-        }
-        deferredPrompt = null;
-        hideInstallPrompt();
-      } else {
-        alert('To install:\n\niOS: Tap Share → Add to Home Screen\nAndroid: Tap Menu → Install App\nDesktop: Look for install icon in address bar');
-      }
-    }
-
-    // Navigation
-    function showLandingPage() {
-      document.getElementById('landing-page').classList.add('active');
-      document.getElementById('trading-bot-page').classList.remove('active');
-      window.scrollTo(0, 0);
-    }
-
-    function showTradingBotPage() {
-      document.getElementById('landing-page').classList.remove('active');
-      document.getElementById('trading-bot-page').classList.add('active');
-      window.scrollTo(0, 0);
-      initDashboardChart();
-    }
-
-    // Loading overlay functions
-    function showLoading() {
-      document.getElementById('loading-overlay').classList.add('show');
-    }
-
-    function hideLoading() {
-      document.getElementById('loading-overlay').classList.remove('show');
-    }
-
-    function startFreeTrial() {
-      showLoading();
-      setTimeout(() => {
-        hideLoading();
-        showTradingBotPage();
-      }, 15000);
-    }
-
-    function handleLogin() {
-      showLoading();
-      setTimeout(() => {
-        hideLoading();
-        showTradingBotPage();
-      }, 15000);
-    }
-
-    // Dropdown menu
-    function toggleMoreOptions() {
-      const dropdown = document.getElementById('more-dropdown');
-      dropdown.classList.toggle('show');
-    }
-
-    // Close dropdown when clicking outside
-    window.addEventListener('click', (e) => {
-      if (!e.target.matches('.btn-ghost')) {
-        const dropdown = document.getElementById('more-dropdown');
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-        }
-      }
+    window.addEventListener('appinstalled', (evt) => {
+      console.info('PWA installed:', evt);
+      isAppInstalled = true;
+      finalizeInstallUI(true);
     });
-
-    // Placeholder functions
-    function showConnectPortfolio() {
-      alert('Connect Portfolio: Link your exchange accounts to track your holdings and execute automated trades.');
-    }
-
-    function showSupport() {
-      alert('24/7 Support: Contact our team via live chat, email, or phone for assistance.');
-    }
-
-    function showConnectWallet() {
-      alert('Connect Wallet: Link your Web3 wallet for decentralized trading and asset management.');
-    }
-
-    // Market Data (CoinGecko API)
-    async function loadMarketData() {
-      try {
-        const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=1&sparkline=false&price_change_percentage=24h');
-        const data = await response.json();
-        
-        const grid = document.getElementById('market-grid');
-        grid.innerHTML = '';
-        
-        data.forEach(coin => {
-          const change = coin.price_change_percentage_24h || 0;
-          const changeClass = change >= 0 ? 'positive' : 'negative';
-          const changeSymbol = change >= 0 ? '+' : '';
-          
-          const card = document.createElement('div');
-          card.className = 'coin-card';
-          card.onclick = () => selectCoin(coin);
-          card.setAttribute('data-testid', `card-coin-${coin.id}`);
-          card.innerHTML = `
-            <div class="coin-header">
-              <img src="${coin.image}" alt="${coin.name}" class="coin-icon">
-              <div class="coin-info">
-                <h3>${coin.name}</h3>
-                <p>${coin.symbol.toUpperCase()}</p>
-              </div>
-            </div>
-            <div class="coin-price">$${coin.current_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div class="coin-change ${changeClass}">${changeSymbol}${change.toFixed(2)}%</div>
-          `;
-          grid.appendChild(card);
-        });
-      } catch (error) {
-        console.error('Error loading market data:', error);
-        document.getElementById('market-grid').innerHTML = '<p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1;">Unable to load market data. Please check your connection.</p>';
-      }
-    }
-
-    function selectCoin(coin) {
-      console.log('Selected coin:', coin.name);
-      const symbolMap = {
-        'bitcoin': 'BTCUSD',
-        'ethereum': 'ETHUSD',
-        'solana': 'SOLUSD',
-        'binancecoin': 'BNBUSD',
-        'ripple': 'XRPUSD',
-        'cardano': 'ADAUSD',
-        'dogecoin': 'DOGEUSD',
-        'polkadot': 'DOTUSD',
-        'polygon': 'MATICUSD',
-        'litecoin': 'LTCUSD',
-        'avalanche-2': 'AVAXUSD',
-        'chainlink': 'LINKUSD'
-      };
-      const symbol = symbolMap[coin.id] || 'BTCUSD';
-      changeChartSymbol(symbol, coin.name);
-    }
-
-    // TradingView Chart
-    let tradingViewWidget = null;
-    let dashboardWidget = null;
-
-    function initTradingViewChart() {
-      if (typeof TradingView === 'undefined') {
-        console.error('TradingView not loaded');
-        return;
-      }
-      
-      const container = document.getElementById('tradingview-chart');
-      if (!container) return;
-      
-      tradingViewWidget = new TradingView.widget({
-        autosize: true,
-        symbol: 'BINANCE:BTCUSDT',
-        interval: 'D',
-        timezone: 'Etc/UTC',
-        theme: 'dark',
-        style: '1',
-        locale: 'en',
-        toolbar_bg: '#070E20',
-        enable_publishing: false,
-        backgroundColor: '#12213A',
-        gridColor: '#1E3557',
-        hide_top_toolbar: false,
-        hide_legend: false,
-        save_image: false,
-        container_id: 'tradingview-chart',
-        studies: [
-          'MASimple@tv-basicstudies',
-          'RSI@tv-basicstudies'
-        ]
-      });
-    }
-
-    function changeChartSymbol(symbol, name) {
-      const symbolMap = {
-        'BTCUSD': 'BINANCE:BTCUSDT',
-        'ETHUSD': 'BINANCE:ETHUSDT',
-        'SOLUSD': 'BINANCE:SOLUSDT',
-        'BNBUSD': 'BINANCE:BNBUSDT',
-        'XRPUSD': 'BINANCE:XRPUSDT',
-        'ADAUSD': 'BINANCE:ADAUSDT',
-        'DOGEUSD': 'BINANCE:DOGEUSDT',
-        'DOTUSD': 'BINANCE:DOTUSDT',
-        'MATICUSD': 'BINANCE:MATICUSDT',
-        'LTCUSD': 'BINANCE:LTCUSDT',
-        'AVAXUSD': 'BINANCE:AVAXUSDT',
-        'LINKUSD': 'BINANCE:LINKUSDT'
-      };
-      
-      const tvSymbol = symbolMap[symbol] || 'BINANCE:BTCUSDT';
-      const coinName = name || symbol.replace('USD', '');
-      document.getElementById('chart-coin-name').textContent = coinName;
-      
-      // Reinitialize chart with new symbol
-      if (tradingViewWidget) {
-        const container = document.getElementById('tradingview-chart');
-        container.innerHTML = '';
-        tradingViewWidget = new TradingView.widget({
-          autosize: true,
-          symbol: tvSymbol,
-          interval: 'D',
-          timezone: 'Etc/UTC',
-          theme: 'dark',
-          style: '1',
-          locale: 'en',
-          toolbar_bg: '#070E20',
-          enable_publishing: false,
-          backgroundColor: '#12213A',
-          gridColor: '#1E3557',
-          hide_top_toolbar: false,
-          hide_legend: false,
-          save_image: false,
-          container_id: 'tradingview-chart'
-        });
-      }
-    }
-
-    function initDashboardChart() {
-      if (typeof TradingView === 'undefined') return;
-      
-      const container = document.getElementById('dashboard-chart');
-      if (!container) return;
-      
-      dashboardWidget = new TradingView.widget({
-        autosize: true,
-        symbol: 'BINANCE:BTCUSDT',
-        interval: '15',
-        timezone: 'Etc/UTC',
-        theme: 'dark',
-        style: '1',
-        locale: 'en',
-        toolbar_bg: '#070E20',
-        enable_publishing: false,
-        backgroundColor: '#12213A',
-        gridColor: '#1E3557',
-        hide_top_toolbar: false,
-        container_id: 'dashboard-chart',
-        studies: [
-          'MASimple@tv-basicstudies',
-          'RSI@tv-basicstudies',
-          'MACD@tv-basicstudies'
-        ]
-      });
-    }
-
-    // Initialize on load
-    window.addEventListener('load', () => {
-      loadMarketData();
-      setTimeout(initTradingViewChart, 100);
-      
-      // Refresh market data every 30 seconds
-      setInterval(loadMarketData, 30000);
-    });
-  </script>
+    setupGetAppButtons();
+    attachButtonActions();
+    // Market data
+    fetchGlobalData();
+    fetchTopCoins();
+    fetchMarketData();
+    setInterval(fetchMarketData, 30000);
+    setInterval(fetchTopCoins, 60000);
+    // Show install modal on load (like Binance example)
+    showInstallModal();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOnDomReady);
+  } else {
+    initOnDomReady();
+  }
+  // ========== Public PWA Installer ========
+  window.pwaInstaller = {
+    showInstallModal,
+    hideInstallModal,
+    ensureManifest,
+    registerServiceWorker,
+    cacheResourcesFromPage,
+    isAppInstalled: () => isAppInstalled
+  };
+})();
+    </script>
 </body>
 </html>
